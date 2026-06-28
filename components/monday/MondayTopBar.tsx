@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 const GOLD = '#C9A24B'
@@ -21,6 +21,12 @@ export default function MondayTopBar() {
   const [showNotifs, setShowNotifs] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [readIds, setReadIds] = useState<Set<string>>(new Set())
+  const [userName, setUserName] = useState('Guest')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pm_user_name')
+    if (saved) setUserName(saved)
+  }, [])
 
   const unread = NOTIFS.filter(n => !readIds.has(n.id)).length
   const markAllRead = () => setReadIds(new Set(NOTIFS.map(n => n.id)))
@@ -80,13 +86,12 @@ export default function MondayTopBar() {
       <div style={{ position: 'relative', marginLeft: 6 }}>
         <button onClick={() => { setShowProfile(v => !v); setShowNotifs(false) }}
           style={{ width: 26, height: 26, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: 9, fontWeight: 700, border: 'none', cursor: 'pointer', letterSpacing: '0.04em' }}>
-          AH
+          {userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'}
         </button>
         {showProfile && (
           <div style={{ position: 'absolute', right: 0, top: 34, width: 200, background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.5)', zIndex: 50, overflow: 'hidden' }}>
             <div style={{ padding: '14px 16px', borderBottom: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 12, color: TEXT, fontWeight: 500 }}>Addison Hwang</div>
-              <div style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>addison@arcelispartners.com</div>
+              <div style={{ fontSize: 12, color: TEXT, fontWeight: 500 }}>{userName}</div>
             </div>
             {[
               { label: 'Profile settings', action: () => {} },

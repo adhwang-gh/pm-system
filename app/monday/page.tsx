@@ -50,18 +50,18 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 
 
 /* ─── Home view ─── */
-function HomeView({ boards, allBoardData, onSelectBoard }: { boards: MBoard[]; allBoardData: Record<string, BoardData>; onSelectBoard: (id: string) => void }) {
+function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }: { boards: MBoard[]; allBoardData: Record<string, BoardData>; onSelectBoard: (id: string) => void; userName: string | null; memberCount: number }) {
   const totalItems = Object.values(allBoardData).reduce((s, d) => s + d.items.length, 0)
   return (
     <div className="flex-1 overflow-y-auto px-8 py-8" style={{ background: '#0B0B0B' }}>
-      <h1 className="text-2xl font-bold mb-1" style={{ color: '#F0F0F0' }}>Welcome back, Addison</h1>
+      <h1 className="text-2xl font-bold mb-1" style={{ color: '#F0F0F0' }}>Welcome back{userName ? `, ${userName}` : ''}</h1>
       <p className="text-sm mb-8" style={{ color: '#444' }}>Here&apos;s what&apos;s happening across your workspace</p>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { label: 'Total boards', value: boards.length },
           { label: 'Total items', value: totalItems },
-          { label: 'Team members', value: 8 },
+          { label: 'Team members', value: memberCount },
         ].map(s => (
           <div key={s.label} className="rounded-xl p-5 flex items-center gap-4" style={{ background: '#141414', border: '1px solid #1E1E1E' }}>
             <div>
@@ -111,8 +111,8 @@ function HomeView({ boards, allBoardData, onSelectBoard }: { boards: MBoard[]; a
 }
 
 /* ─── My Work view ─── */
-function MyWorkView({ allBoardData }: { allBoardData: Record<string, BoardData> }) {
-  const MY_KEY = 'AH'
+function MyWorkView({ allBoardData, myMemberId }: { allBoardData: Record<string, BoardData>; myMemberId: string }) {
+  const MY_KEY = myMemberId
   const myItems: (MItem & { boardTitle: string; boardId: string })[] = []
   Object.values(allBoardData).forEach(d => {
     const personCol = d.columns.find(c => c.type === 'person')
@@ -210,6 +210,44 @@ function InboxView() {
   )
 }
 
+/* ─── Who are you modal ─── */
+function WhoAreYouModal({ onDone }: { onDone: (name: string, memberId: string) => void }) {
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const submit = async () => {
+    const n = name.trim()
+    if (!n) return
+    setLoading(true)
+    const res = await fetch('/monday/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n }) })
+    const m = await res.json()
+    localStorage.setItem('pm_user_name', n)
+    localStorage.setItem('pm_user_member_id', m.id)
+    onDone(n, m.id)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)' }}>
+      <div style={{ background: '#111', border: '1px solid #2A2A2A', borderRadius: 16, padding: '36px 32px', width: 380, boxShadow: '0 16px 48px rgba(0,0,0,0.8)' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#EDE8DD', marginBottom: 6, fontFamily: 'Jost, sans-serif', letterSpacing: '0.04em' }}>Welcome</div>
+        <div style={{ fontSize: 12, color: '#8A8478', marginBottom: 28 }}>Who are you? We&apos;ll add you to the team.</div>
+        <input autoFocus value={name} onChange={e => setName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') submit() }}
+          placeholder="Your full name"
+          style={{ width: '100%', background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#EDE8DD', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+        <button onClick={submit} disabled={!name.trim() || loading}
+          style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: name.trim() && !loading ? 1 : 0.5 }}>
+          {loading ? 'Adding you…' : 'Enter workspace'}
+        </button>
+        <button onClick={() => onDone('Guest', '')}
+          style={{ width: '100%', marginTop: 10, background: 'none', border: 'none', color: '#555', fontSize: 12, cursor: 'pointer', padding: '6px 0' }}>
+          Continue as guest
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /* ─── Main page ─── */
 export default function PMSystemPage() {
   const [boards, setBoards] = useState<MBoard[]>([])
@@ -225,12 +263,27 @@ export default function PMSystemPage() {
   const [showBoardMenu, setShowBoardMenu] = useState(false)
   const [renamingBoard, setRenamingBoard] = useState(false)
   const [renameVal, setRenameVal] = useState('')
+  const [userName, setUserName] = useState<string | null>(null)
+  const [myMemberId, setMyMemberId] = useState<string>('')
+  const [showWhoModal, setShowWhoModal] = useState(false)
+  const [memberCount, setMemberCount] = useState(0)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pm_user_name')
+    if (saved) {
+      setUserName(saved)
+      setMyMemberId(localStorage.getItem('pm_user_member_id') ?? '')
+    } else {
+      setShowWhoModal(true)
+    }
+  }, [])
 
   useEffect(() => {
     fetch('/monday/api/boards').then(r => r.json()).then((data: MBoard[]) => {
       setBoards(data)
       if (data.length > 0) setSelectedBoardId(data[0].id)
     })
+    fetch('/monday/api/members').then(r => r.json()).then((data: unknown[]) => setMemberCount(Array.isArray(data) ? data.length : 0))
   }, [])
 
   const loadBoard = useCallback(async (id: string) => {
@@ -360,9 +413,9 @@ export default function PMSystemPage() {
 
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#0B0B0B' }}>
           {activeNav === 'home' && (
-            <HomeView boards={boards} allBoardData={allBoardData} onSelectBoard={id => { setSelectedBoardId(id); setActiveNav('board') }} />
+            <HomeView boards={boards} allBoardData={allBoardData} onSelectBoard={id => { setSelectedBoardId(id); setActiveNav('board') }} userName={userName} memberCount={memberCount} />
           )}
-          {activeNav === 'mywork' && <MyWorkView allBoardData={allBoardData} />}
+          {activeNav === 'mywork' && <MyWorkView allBoardData={allBoardData} myMemberId={myMemberId} />}
           {activeNav === 'inbox' && <InboxView />}
           {activeNav === 'updates' && <WeeklyUpdatesView />}
 
@@ -440,6 +493,7 @@ export default function PMSystemPage() {
         </div>
       </div>
 
+      {showWhoModal && <WhoAreYouModal onDone={(name, id) => { setUserName(name); setMyMemberId(id); setShowWhoModal(false) }} />}
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       {showIntegrate && selectedBoardId && <IntegrateModal boardId={selectedBoardId} onClose={() => setShowIntegrate(false)} />}
       {showAutomate && selectedBoardId && <AutomateModal boardId={selectedBoardId} onClose={() => setShowAutomate(false)} />}

@@ -83,30 +83,16 @@ export async function initMondaySchema() {
       updated_at TEXT DEFAULT (datetime('now')),
       UNIQUE(member_key, week_of)
     )`, args: [] },
+    { sql: `CREATE TABLE IF NOT EXISTS pm_members (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      initials TEXT NOT NULL,
+      color TEXT DEFAULT '#8A8478',
+      created_at TEXT DEFAULT (datetime('now'))
+    )`, args: [] },
   ], 'write')
   _initialized = true
-  await seedTeamsIfEmpty(turso)
   await seedMondayIfEmpty(turso)
-}
-
-async function seedTeamsIfEmpty(turso: ReturnType<typeof getTurso>) {
-  const res = await turso.execute('SELECT COUNT(*) as c FROM pm_teams')
-  const count = Number(res.rows[0]?.c ?? 0)
-  if (count > 0) return
-
-  const teams = [
-    { name: "Shawn's Team", lead_key: 'CEO', members: ['CEO', 'AH', 'MKT'], position: 0 },
-    { name: "Aryan's Team", lead_key: 'CTO', members: ['CTO', 'ENG1', 'ENG2'], position: 1 },
-    { name: "Ian's Team",   lead_key: 'CPO', members: ['CPO', 'DES'], position: 2 },
-  ]
-
-  for (const t of teams) {
-    const teamId = randomUUID()
-    await turso.execute({ sql: 'INSERT INTO pm_teams (id, name, lead_key, position) VALUES (?, ?, ?, ?)', args: [teamId, t.name, t.lead_key, t.position] })
-    for (let i = 0; i < t.members.length; i++) {
-      await turso.execute({ sql: 'INSERT INTO pm_team_members (id, team_id, member_key, position) VALUES (?, ?, ?, ?)', args: [randomUUID(), teamId, t.members[i], i] })
-    }
-  }
 }
 
 async function seedMondayIfEmpty(turso: ReturnType<typeof getTurso>) {
@@ -141,12 +127,12 @@ async function seedMondayIfEmpty(turso: ReturnType<typeof getTurso>) {
   }
 
   const items = [
-    { group: 0, title: 'Website Revamp for Q3 Campaign', pm: 'AH', overview: 'The current company website needs a full redesign for the Q3 marketing push.', status: "Haven't started yet", priority: 'Medium', phase: 'Upcoming', start: '2025-07-01', end: '2025-09-15' },
-    { group: 0, title: 'Cloud Infrastructure Migration', pm: 'CTO', overview: 'This project proposes a complete cloud migration of our on-prem servers.', status: "Haven't started yet", priority: 'Low', phase: 'Upcoming', start: '2025-05-29', end: '2025-12-01' },
-    { group: 1, title: 'Sustainability Initiative Kickoff', pm: 'CPO', overview: 'This project proposes the company-wide sustainability roadmap.', status: 'On track', priority: 'Medium', phase: 'Ongoing', start: '2025-05-20', end: '2025-08-31' },
-    { group: 1, title: 'Mobile App Redesign', pm: 'CTO', overview: 'Full redesign of the mobile app UX based on user research findings.', status: 'At risk', priority: 'High', phase: 'Ongoing', start: '2025-06-01', end: '2025-09-01' },
-    { group: 2, title: 'AI-Powered Customer Support Bot', pm: 'AH', overview: 'With growing customer support load, this bot handles Tier-1 queries automatically.', status: 'On track', priority: 'High', phase: 'Completed', start: '2025-06-01', end: '2025-06-30' },
-    { group: 2, title: 'Q1 Financial Audit', pm: 'CEO', overview: 'Annual financial audit completed ahead of schedule.', status: 'On track', priority: 'Medium', phase: 'Completed', start: '2025-01-15', end: '2025-03-31' },
+    { group: 0, title: 'Website Revamp for Q3 Campaign', pm: '', overview: 'Full redesign of the company website for the Q3 marketing push.', status: "Haven't started yet", priority: 'Medium', phase: 'Upcoming', start: '2025-07-01', end: '2025-09-15' },
+    { group: 0, title: 'Cloud Infrastructure Migration', pm: '', overview: 'Complete cloud migration of on-prem servers.', status: "Haven't started yet", priority: 'Low', phase: 'Upcoming', start: '2025-05-29', end: '2025-12-01' },
+    { group: 1, title: 'Sustainability Initiative Kickoff', pm: '', overview: 'Company-wide sustainability roadmap launch.', status: 'On track', priority: 'Medium', phase: 'Ongoing', start: '2025-05-20', end: '2025-08-31' },
+    { group: 1, title: 'Mobile App Redesign', pm: '', overview: 'Full redesign of the mobile app UX based on user research.', status: 'At risk', priority: 'High', phase: 'Ongoing', start: '2025-06-01', end: '2025-09-01' },
+    { group: 2, title: 'AI-Powered Customer Support Bot', pm: '', overview: 'Bot handles Tier-1 customer queries automatically.', status: 'Done', priority: 'High', phase: 'Completed', start: '2025-06-01', end: '2025-06-30' },
+    { group: 2, title: 'Q1 Financial Audit', pm: '', overview: 'Annual financial audit completed ahead of schedule.', status: 'Done', priority: 'Medium', phase: 'Completed', start: '2025-01-15', end: '2025-03-31' },
   ]
 
   for (let i = 0; i < items.length; i++) {

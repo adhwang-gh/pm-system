@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { MColumn } from './types'
 
 const GOLD = '#C9A24B'
@@ -10,29 +10,23 @@ const BORDER = '#2A2A2A'
 const TEXT = '#EDE8DD'
 const MUTED = '#8A8478'
 
+export interface PMember {
+  id: string
+  name: string
+  initials: string
+  color: string
+}
+
 interface Props {
   col: MColumn
   value: string | number | undefined
   onChange: (v: string | number) => void
 }
 
-export const TEAM_MEMBERS = [
-  { key: 'AH',   initials: 'AH', name: 'Addison Hwang', role: 'Admin',                    color: GOLD },
-  { key: 'CEO',  initials: 'CE', name: 'Shawn (CEO)',    role: 'Chief Executive Officer',  color: '#888' },
-  { key: 'CTO',  initials: 'CT', name: 'Aryan (CTO)',    role: 'Chief Technology Officer', color: '#AAA' },
-  { key: 'CPO',  initials: 'CP', name: 'Ian (CPO)',      role: 'Chief Product Officer',    color: '#666' },
-  { key: 'ENG1', initials: 'E1', name: 'Engineer 1',     role: 'Software Engineer',        color: '#777' },
-  { key: 'ENG2', initials: 'E2', name: 'Engineer 2',     role: 'Software Engineer',        color: '#999' },
-  { key: 'DES',  initials: 'DS', name: 'Designer',       role: 'Product Designer',         color: '#666' },
-  { key: 'MKT',  initials: 'MK', name: 'Marketing',      role: 'Marketing Lead',           color: '#888' },
-]
-
-function MemberAvatar({ memberKey, size = 28 }: { memberKey: string; size?: number }) {
-  const m = TEAM_MEMBERS.find(t => t.key === memberKey)
-  if (!m) return null
+function MemberAvatar({ member, size = 28 }: { member: PMember; size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 800, fontSize: size * 0.36, flexShrink: 0 }} title={`${m.name} · ${m.role}`}>
-      {m.initials}
+    <div style={{ width: size, height: size, borderRadius: '50%', background: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 800, fontSize: size * 0.36, flexShrink: 0 }} title={member.name}>
+      {member.initials}
     </div>
   )
 }
@@ -51,8 +45,18 @@ export default function MondayCell({ col, value, onChange }: Props) {
   const [editing, setEditing] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [search, setSearch] = useState('')
+  const [members, setMembers] = useState<PMember[]>([])
+  const [addingName, setAddingName] = useState('')
+  const [showAddInput, setShowAddInput] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const str = String(value ?? '')
+
+  // Fetch members when person picker opens
+  useEffect(() => {
+    if (col.type === 'person' && editing) {
+      fetch('/monday/api/members').then(r => r.json()).then(setMembers).catch(() => {})
+    }
+  }, [col.type, editing])
 
   const dropdownStyle: React.CSSProperties = {
     position: 'absolute', top: 38, left: 0, zIndex: 50,
@@ -97,31 +101,42 @@ export default function MondayCell({ col, value, onChange }: Props) {
 
   /* ── Person ── */
   if (col.type === 'person') {
-    const selectedKeys = str ? str.split(',').filter(Boolean) : []
-    const filtered = TEAM_MEMBERS.filter(m =>
-      !search || m.name.toLowerCase().includes(search.toLowerCase()) || m.role.toLowerCase().includes(search.toLowerCase())
+    const selectedIds = str ? str.split(',').filter(Boolean) : []
+    const filtered = members.filter(m =>
+      !search || m.name.toLowerCase().includes(search.toLowerCase())
     )
 
-    const toggle = (key: string) => {
-      const next = selectedKeys.includes(key) ? selectedKeys.filter(k => k !== key) : [...selectedKeys, key]
+    const toggle = (id: string) => {
+      const next = selectedIds.includes(id) ? selectedIds.filter(k => k !== id) : [...selectedIds, id]
       onChange(next.join(','))
+    }
+
+    const addMember = async () => {
+      const name = addingName.trim()
+      if (!name) return
+      const res = await fetch('/monday/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+      const m = await res.json()
+      setMembers(prev => [...prev, m])
+      toggle(m.id)
+      setAddingName('')
+      setShowAddInput(false)
     }
 
     return (
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setEditing(v => !v); setSearch('') }}>
-          {selectedKeys.length === 0 ? (
+        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setEditing(v => !v); setSearch(''); setShowAddInput(false) }}>
+          {selectedIds.length === 0 ? (
             <button style={{ width: 26, height: 26, borderRadius: '50%', border: `1px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: MUTED, background: 'none', cursor: 'pointer' }}>+</button>
           ) : (
             <div style={{ display: 'flex' }}>
-              {selectedKeys.slice(0, 3).map((k, i) => {
-                const known = TEAM_MEMBERS.find(t => t.key === k)
-                return known
-                  ? <div key={k} style={{ marginLeft: i > 0 ? -6 : 0, border: '1px solid #0A0A0A', borderRadius: '50%' }}><MemberAvatar memberKey={k} size={26} /></div>
-                  : <div key={k} style={{ width: 26, height: 26, borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: TEXT, marginLeft: i > 0 ? -6 : 0, border: '1px solid #0A0A0A' }}>{k.slice(0, 2)}</div>
+              {selectedIds.slice(0, 3).map((id, i) => {
+                const m = members.find(t => t.id === id)
+                return m
+                  ? <div key={id} style={{ marginLeft: i > 0 ? -6 : 0, border: '1px solid #0A0A0A', borderRadius: '50%' }}><MemberAvatar member={m} size={26} /></div>
+                  : <div key={id} style={{ width: 26, height: 26, borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: TEXT, marginLeft: i > 0 ? -6 : 0, border: '1px solid #0A0A0A' }}>?</div>
               })}
-              {selectedKeys.length > 3 && (
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: TEXT, marginLeft: -6, border: '1px solid #0A0A0A' }}>+{selectedKeys.length - 3}</div>
+              {selectedIds.length > 3 && (
+                <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: TEXT, marginLeft: -6, border: '1px solid #0A0A0A' }}>+{selectedIds.length - 3}</div>
               )}
             </div>
           )}
@@ -129,29 +144,50 @@ export default function MondayCell({ col, value, onChange }: Props) {
 
         {editing && (
           <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setEditing(false); setSearch('') }} />
+            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setEditing(false); setSearch(''); setShowAddInput(false) }} />
             <div style={{ ...dropdownStyle, width: 240, overflow: 'hidden' }}>
               <div style={{ padding: 8, borderBottom: `1px solid ${BORDER}` }}>
-                <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search…"
+                <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search people…"
                   style={{ width: '100%', background: '#0D0D0D', border: `1px solid ${BORDER}`, borderRadius: 7, padding: '5px 10px', fontSize: 12, color: TEXT, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div style={{ maxHeight: 200, overflowY: 'auto', padding: '4px 0' }}>
+                {filtered.length === 0 && !showAddInput && (
+                  <div style={{ padding: '8px 12px', fontSize: 12, color: MUTED }}>No people yet</div>
+                )}
                 {filtered.map(m => {
-                  const selected = selectedKeys.includes(m.key)
+                  const selected = selectedIds.includes(m.id)
                   return (
-                    <button key={m.key} onClick={() => toggle(m.key)}
+                    <button key={m.id} onClick={() => toggle(m.id)}
                       style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', background: selected ? `${GOLD}10` : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                      <MemberAvatar memberKey={m.key} size={26} />
+                      <MemberAvatar member={m} size={26} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                        <div style={{ fontSize: 10, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.role}</div>
                       </div>
                       {selected && <span style={{ color: GOLD, fontSize: 12, flexShrink: 0 }}>✓</span>}
                     </button>
                   )
                 })}
               </div>
-              {selectedKeys.length > 0 && (
+
+              {/* Add person */}
+              <div style={{ borderTop: `1px solid ${BORDER}`, padding: 8 }}>
+                {showAddInput ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input autoFocus value={addingName} onChange={e => setAddingName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') addMember(); if (e.key === 'Escape') { setShowAddInput(false); setAddingName('') } }}
+                      placeholder="Full name…"
+                      style={{ flex: 1, background: '#0D0D0D', border: `1px solid ${GOLD}55`, borderRadius: 6, padding: '4px 8px', fontSize: 12, color: TEXT, outline: 'none' }} />
+                    <button onClick={addMember} style={{ fontSize: 11, background: GOLD, color: '#000', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontWeight: 700 }}>Add</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowAddInput(true)}
+                    style={{ width: '100%', fontSize: 11, color: GOLD, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left', letterSpacing: '0.04em' }}>
+                    + Add person
+                  </button>
+                )}
+              </div>
+
+              {selectedIds.length > 0 && (
                 <div style={{ borderTop: `1px solid ${BORDER}`, padding: 8 }}>
                   <button onClick={() => { onChange(''); setEditing(false) }}
                     style={{ width: '100%', fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
