@@ -92,6 +92,20 @@ export async function initMondaySchema() {
       color TEXT DEFAULT '#8A8478',
       created_at TEXT DEFAULT (datetime('now'))
     )`, args: [] },
+    { sql: `CREATE TABLE IF NOT EXISTS pm_users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`, args: [] },
+    { sql: `CREATE TABLE IF NOT EXISTS pm_invites (
+      id TEXT PRIMARY KEY,
+      label TEXT DEFAULT '',
+      used INTEGER DEFAULT 0,
+      used_by_email TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`, args: [] },
   ], 'write')
 
   // Migrations: add user_id if tables existed without it

@@ -210,44 +210,104 @@ function InboxView() {
   )
 }
 
-/* ─── Who are you modal ─── */
-function WhoAreYouModal({ onDone, userId }: { onDone: (name: string, memberId: string) => void; userId: string }) {
+/* ─── Auth gate ─── */
+function AuthGate({ inviteToken, onDone }: { inviteToken: string | null; onDone: (userId: string, name: string) => void }) {
+  const [mode, setMode] = useState<'login' | 'register'>(inviteToken ? 'register' : 'login')
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const submit = async () => {
-    const n = name.trim()
-    if (!n) return
-    setLoading(true)
-    // Use the pre-generated userId as the member id too
-    const res = await fetch('/monday/api/members', {
+  const register = async () => {
+    if (!name.trim() || !email.trim()) return
+    setLoading(true); setError('')
+    const res = await fetch('/monday/api/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId },
-      body: JSON.stringify({ name: n, id: userId }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteToken, name: name.trim(), email: email.trim() }),
     })
-    const m = await res.json()
-    localStorage.setItem('pm_user_name', n)
-    localStorage.setItem('pm_user_member_id', m.id)
-    onDone(n, m.id)
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); setLoading(false); return }
+    localStorage.setItem('pm_user_id', data.userId)
+    localStorage.setItem('pm_user_name', data.name)
+    localStorage.setItem('pm_user_email', data.email)
+    localStorage.setItem('pm_user_member_id', data.userId)
+    onDone(data.userId, data.name)
+  }
+
+  const login = async () => {
+    if (!email.trim()) return
+    setLoading(true); setError('')
+    const res = await fetch('/monday/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim() }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); setLoading(false); return }
+    localStorage.setItem('pm_user_id', data.userId)
+    localStorage.setItem('pm_user_name', data.name)
+    localStorage.setItem('pm_user_email', data.email)
+    localStorage.setItem('pm_user_member_id', data.userId)
+    onDone(data.userId, data.name)
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8,
+    padding: '10px 14px', fontSize: 13, color: '#EDE8DD', outline: 'none',
+    boxSizing: 'border-box', marginBottom: 10,
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.85)' }}>
-      <div style={{ background: '#111', border: '1px solid #2A2A2A', borderRadius: 16, padding: '36px 32px', width: 380, boxShadow: '0 16px 48px rgba(0,0,0,0.8)' }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#EDE8DD', marginBottom: 6, fontFamily: 'Jost, sans-serif', letterSpacing: '0.04em' }}>Welcome</div>
-        <div style={{ fontSize: 12, color: '#8A8478', marginBottom: 28 }}>Who are you? We&apos;ll add you to the team.</div>
-        <input autoFocus value={name} onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') submit() }}
-          placeholder="Your full name"
-          style={{ width: '100%', background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#EDE8DD', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
-        <button onClick={submit} disabled={!name.trim() || loading}
-          style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: name.trim() && !loading ? 1 : 0.5 }}>
-          {loading ? 'Adding you…' : 'Enter workspace'}
-        </button>
-        <button onClick={() => { localStorage.setItem('pm_user_name', 'Guest'); onDone('Guest', userId) }}
-          style={{ width: '100%', marginTop: 10, background: 'none', border: 'none', color: '#555', fontSize: 12, cursor: 'pointer', padding: '6px 0' }}>
-          Continue as guest
-        </button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080808' }}>
+      <div style={{ background: '#111', border: '1px solid #2A2A2A', borderRadius: 16, padding: '40px 36px', width: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.9)' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#EDE8DD', marginBottom: 4, letterSpacing: '0.02em' }}>
+          {mode === 'register' ? 'Create your account' : 'Sign in'}
+        </div>
+        <div style={{ fontSize: 12, color: '#555', marginBottom: 28 }}>
+          {mode === 'register'
+            ? inviteToken ? "You've been invited. Enter your details to get started." : 'Register to access the workspace.'
+            : 'Enter your email to access your workspace.'}
+        </div>
+
+        {mode === 'register' && !inviteToken && (
+          <div style={{ background: '#1A1A1A', border: '1px solid #B0221B44', borderRadius: 8, padding: '12px 14px', marginBottom: 20, fontSize: 12, color: '#B0221B' }}>
+            This workspace is invite-only. If you have an invite link, use it to register.
+            <br /><br />
+            <span style={{ color: '#555' }}>Already have an account?{' '}</span>
+            <button onClick={() => { setMode('login'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: 0 }}>Sign in instead</button>
+          </div>
+        )}
+
+        {mode === 'register' && (
+          <input autoFocus value={name} onChange={e => setName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') register() }}
+            placeholder="Your full name" style={inputStyle} />
+        )}
+
+        <input
+          autoFocus={mode === 'login'}
+          value={email} onChange={e => setEmail(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') mode === 'register' ? register() : login() }}
+          placeholder="Email address" type="email" style={inputStyle} />
+
+        {error && <div style={{ fontSize: 12, color: '#B0221B', marginBottom: 12, lineHeight: 1.4 }}>{error}</div>}
+
+        {(mode === 'register' && inviteToken) || mode === 'login' ? (
+          <button onClick={mode === 'register' ? register : login}
+            disabled={loading || !email.trim() || (mode === 'register' && !name.trim())}
+            style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, marginTop: 4 }}>
+            {loading ? '…' : mode === 'register' ? 'Create account' : 'Sign in'}
+          </button>
+        ) : null}
+
+        <div style={{ marginTop: 16, fontSize: 11, color: '#444', textAlign: 'center' }}>
+          {mode === 'register' ? (
+            <>Already have an account? <button onClick={() => { setMode('login'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Sign in</button></>
+          ) : (
+            <>Need access? Ask the workspace owner for an invite link.</>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -270,24 +330,23 @@ export default function PMSystemPage() {
   const [renameVal, setRenameVal] = useState('')
   const [userName, setUserName] = useState<string | null>(null)
   const [myMemberId, setMyMemberId] = useState<string>('')
-  const [showWhoModal, setShowWhoModal] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [inviteToken, setInviteToken] = useState<string | null>(null)
   const [memberCount, setMemberCount] = useState(0)
   const [userId, setUserId] = useState<string>('')
 
-  // Generate or load userId on mount — always show modal for new visitors
+  // Check auth state on mount
   useEffect(() => {
-    let uid = localStorage.getItem('pm_user_id')
-    if (!uid) {
-      uid = crypto.randomUUID()
-      localStorage.setItem('pm_user_id', uid)
-    }
-    setUserId(uid)
+    const token = new URLSearchParams(window.location.search).get('invite')
+    if (token) setInviteToken(token)
+    const uid = localStorage.getItem('pm_user_id')
     const savedName = localStorage.getItem('pm_user_name')
-    if (savedName) {
+    if (uid && savedName) {
+      setUserId(uid)
       setUserName(savedName)
       setMyMemberId(localStorage.getItem('pm_user_member_id') ?? uid)
     } else {
-      setShowWhoModal(true)
+      setShowAuth(true)
     }
   }, [])
 
@@ -510,7 +569,7 @@ export default function PMSystemPage() {
         </div>
       </div>
 
-      {showWhoModal && userId && <WhoAreYouModal userId={userId} onDone={(name, id) => { setUserName(name); setMyMemberId(id); setShowWhoModal(false) }} />}
+      {showAuth && <AuthGate inviteToken={inviteToken} onDone={(uid, name) => { setUserId(uid); setUserName(name); setMyMemberId(uid); setShowAuth(false) }} />}
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       {showIntegrate && selectedBoardId && <IntegrateModal boardId={selectedBoardId} onClose={() => setShowIntegrate(false)} />}
       {showAutomate && selectedBoardId && <AutomateModal boardId={selectedBoardId} onClose={() => setShowAutomate(false)} />}
