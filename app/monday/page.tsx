@@ -211,52 +211,40 @@ function InboxView() {
 }
 
 /* ─── Auth gate ─── */
-function AuthGate({ inviteToken, onDone }: { inviteToken: string | null; onDone: (userId: string, name: string) => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>(inviteToken ? 'register' : 'login')
+function AuthGate({ onDone }: { onDone: (userId: string, name: string) => void }) {
+  const [mode, setMode] = useState<'login' | 'register'>('register')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const register = async () => {
-    if (!name.trim() || !email.trim()) return
-    setLoading(true); setError('')
-    const res = await fetch('/monday/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inviteToken, name: name.trim(), email: email.trim() }),
-    })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error); setLoading(false); return }
+  const save = (data: { userId: string; name: string; email: string }) => {
     localStorage.setItem('pm_user_id', data.userId)
     localStorage.setItem('pm_user_name', data.name)
     localStorage.setItem('pm_user_email', data.email)
     localStorage.setItem('pm_user_member_id', data.userId)
     onDone(data.userId, data.name)
+  }
+
+  const register = async () => {
+    if (!name.trim() || !email.trim()) return
+    setLoading(true); setError('')
+    const res = await fetch('/monday/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim(), email: email.trim() }) })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); setLoading(false); return }
+    save(data)
   }
 
   const login = async () => {
     if (!email.trim()) return
     setLoading(true); setError('')
-    const res = await fetch('/monday/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim() }),
-    })
+    const res = await fetch('/monday/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setLoading(false); return }
-    localStorage.setItem('pm_user_id', data.userId)
-    localStorage.setItem('pm_user_name', data.name)
-    localStorage.setItem('pm_user_email', data.email)
-    localStorage.setItem('pm_user_member_id', data.userId)
-    onDone(data.userId, data.name)
+    save(data)
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8,
-    padding: '10px 14px', fontSize: 13, color: '#EDE8DD', outline: 'none',
-    boxSizing: 'border-box', marginBottom: 10,
-  }
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#EDE8DD', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080808' }}>
@@ -265,48 +253,27 @@ function AuthGate({ inviteToken, onDone }: { inviteToken: string | null; onDone:
           {mode === 'register' ? 'Create your account' : 'Sign in'}
         </div>
         <div style={{ fontSize: 12, color: '#555', marginBottom: 28 }}>
-          {mode === 'register'
-            ? inviteToken ? "You've been invited. Enter your details to get started." : 'Register to access the workspace.'
-            : 'Enter your email to access your workspace.'}
+          {mode === 'register' ? 'Enter your name and email to get started.' : 'Enter your email to access your workspace.'}
         </div>
 
-        {mode === 'register' && !inviteToken && (
-          <div style={{ background: '#1A1A1A', border: '1px solid #B0221B44', borderRadius: 8, padding: '12px 14px', marginBottom: 20, fontSize: 12, color: '#B0221B' }}>
-            This workspace is invite-only. If you have an invite link, use it to register.
-            <br /><br />
-            <span style={{ color: '#555' }}>Already have an account?{' '}</span>
-            <button onClick={() => { setMode('login'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: 0 }}>Sign in instead</button>
-          </div>
-        )}
-
         {mode === 'register' && (
-          <input autoFocus value={name} onChange={e => setName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') register() }}
-            placeholder="Your full name" style={inputStyle} />
+          <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') register() }} placeholder="Your full name" style={inputStyle} />
         )}
 
-        <input
-          autoFocus={mode === 'login'}
-          value={email} onChange={e => setEmail(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') mode === 'register' ? register() : login() }}
-          placeholder="Email address" type="email" style={inputStyle} />
+        <input autoFocus={mode === 'login'} value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') mode === 'register' ? register() : login() }} placeholder="Email address" type="email" style={inputStyle} />
 
         {error && <div style={{ fontSize: 12, color: '#B0221B', marginBottom: 12, lineHeight: 1.4 }}>{error}</div>}
 
-        {(mode === 'register' && inviteToken) || mode === 'login' ? (
-          <button onClick={mode === 'register' ? register : login}
-            disabled={loading || !email.trim() || (mode === 'register' && !name.trim())}
-            style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, marginTop: 4 }}>
-            {loading ? '…' : mode === 'register' ? 'Create account' : 'Sign in'}
-          </button>
-        ) : null}
+        <button onClick={mode === 'register' ? register : login}
+          disabled={loading || !email.trim() || (mode === 'register' && !name.trim())}
+          style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, marginTop: 4 }}>
+          {loading ? '…' : mode === 'register' ? 'Create account' : 'Sign in'}
+        </button>
 
         <div style={{ marginTop: 16, fontSize: 11, color: '#444', textAlign: 'center' }}>
-          {mode === 'register' ? (
-            <>Already have an account? <button onClick={() => { setMode('login'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Sign in</button></>
-          ) : (
-            <>Need access? Ask the workspace owner for an invite link.</>
-          )}
+          {mode === 'register'
+            ? <>Already have an account? <button onClick={() => { setMode('login'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Sign in</button></>
+            : <>New here? <button onClick={() => { setMode('register'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Create an account</button></>}
         </div>
       </div>
     </div>
@@ -331,14 +298,11 @@ export default function PMSystemPage() {
   const [userName, setUserName] = useState<string | null>(null)
   const [myMemberId, setMyMemberId] = useState<string>('')
   const [showAuth, setShowAuth] = useState(false)
-  const [inviteToken, setInviteToken] = useState<string | null>(null)
   const [memberCount, setMemberCount] = useState(0)
   const [userId, setUserId] = useState<string>('')
 
   // Check auth state on mount
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get('invite')
-    if (token) setInviteToken(token)
     const uid = localStorage.getItem('pm_user_id')
     const savedName = localStorage.getItem('pm_user_name')
     if (uid && savedName) {
@@ -569,7 +533,7 @@ export default function PMSystemPage() {
         </div>
       </div>
 
-      {showAuth && <AuthGate inviteToken={inviteToken} onDone={(uid, name) => { setUserId(uid); setUserName(name); setMyMemberId(uid); setShowAuth(false) }} />}
+      {showAuth && <AuthGate onDone={(uid, name) => { setUserId(uid); setUserName(name); setMyMemberId(uid); setShowAuth(false) }} />}
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       {showIntegrate && selectedBoardId && <IntegrateModal boardId={selectedBoardId} onClose={() => setShowIntegrate(false)} />}
       {showAutomate && selectedBoardId && <AutomateModal boardId={selectedBoardId} onClose={() => setShowAutomate(false)} />}
