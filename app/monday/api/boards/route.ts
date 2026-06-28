@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server'
 import { getTurso, toRows } from '@/lib/tursoClient'
-import { initMondaySchema } from '@/lib/mondayDb'
+import { initMondaySchema, seedForUser } from '@/lib/mondayDb'
 import { randomUUID } from 'crypto'
 
-export async function GET() {
+function getUserId(req: Request): string {
+  return req.headers.get('X-Pm-User-Id') ?? 'anonymous'
+}
+
+export async function GET(req: Request) {
   await initMondaySchema()
+  const userId = getUserId(req)
+  await seedForUser(userId)
   const turso = getTurso()
-  const res = await turso.execute('SELECT * FROM monday_boards ORDER BY created_at ASC')
+  const res = await turso.execute({ sql: 'SELECT * FROM monday_boards WHERE user_id = ? ORDER BY created_at ASC', args: [userId] })
   return NextResponse.json(toRows(res.rows))
 }
 
 export async function POST(req: Request) {
   await initMondaySchema()
+  const userId = getUserId(req)
   const turso = getTurso()
   const body = await req.json()
   const boardId = randomUUID()
-  await turso.execute({ sql: 'INSERT INTO monday_boards (id, title, description) VALUES (?, ?, ?)', args: [boardId, body.title ?? 'New Board', body.description ?? ''] })
+  await turso.execute({ sql: 'INSERT INTO monday_boards (id, user_id, title, description) VALUES (?, ?, ?, ?)', args: [boardId, userId, body.title ?? 'New Board', body.description ?? ''] })
 
   const cols = [
     { id: randomUUID(), title: 'PM', type: 'person', width: 60, options: '[]' },
@@ -40,18 +47,10 @@ export async function POST(req: Request) {
     await turso.execute({ sql: 'INSERT INTO monday_groups (id, board_id, title, color, position) VALUES (?, ?, ?, ?, ?)', args: [g.id, boardId, g.title, g.color, g.position] })
   }
 
-  const sampleItems = [
-    { group: 0, title: 'Project kickoff', pm: 'AH', overview: 'Initial planning and stakeholder alignment.', status: "Haven't started yet", priority: 'High', phase: 'Upcoming' },
-    { group: 1, title: 'Research & discovery', pm: 'CPO', overview: 'User research and competitive analysis phase.', status: 'On track', priority: 'Medium', phase: 'Ongoing' },
-  ]
-  for (let i = 0; i < sampleItems.length; i++) {
-    const item = sampleItems[i]
-    const g = groups[item.group]
-    await turso.execute({
-      sql: 'INSERT INTO monday_items (id, board_id, group_id, title, data, position) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [randomUUID(), boardId, g.id, item.title, JSON.stringify({ [pmCol.id]: item.pm, [overviewCol.id]: item.overview, [statusCol.id]: item.status, [priorityCol.id]: item.priority, [phaseCol.id]: item.phase, [timelineCol.id]: '' }), i],
-    })
-  }
+  await turso.execute({
+    sql: 'INSERT INTO monday_items (id, board_id, group_id, title, data, position) VALUES (?, ?, ?, ?, ?, ?)',
+    args: [randomUUID(), boardId, groups[0].id, 'First item', JSON.stringify({ [pmCol.id]: '', [overviewCol.id]: '', [statusCol.id]: "Haven't started yet", [priorityCol.id]: 'Medium', [phaseCol.id]: 'Upcoming', [timelineCol.id]: '' }), 0],
+  })
 
   const board = (await turso.execute({ sql: 'SELECT * FROM monday_boards WHERE id = ?', args: [boardId] })).rows[0]
   return NextResponse.json(Object.fromEntries(Object.entries(board)), { status: 201 })

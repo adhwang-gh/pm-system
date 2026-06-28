@@ -21,15 +21,17 @@ interface Props {
   onAddItem: (groupId: string, title: string) => void
   onAddGroup: (title: string) => void
   onToggleGroup: (groupId: string, collapsed: boolean) => void
+  userId?: string
 }
 
 type SortDir = 'asc' | 'desc'
 
-function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, hiddenCols, selectedIds, onToggleSelect, onSelectAll }: {
+function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, hiddenCols, selectedIds, onToggleSelect, onSelectAll, userId }: {
   group: MGroup; columns: MColumn[]; items: MItem[]; hiddenCols: Set<string>
   selectedIds: Set<string>; onToggleSelect: (id: string) => void; onSelectAll: (ids: string[]) => void
   onUpdateItem: (itemId: string, title?: string, data?: Record<string, string | number>) => void
   onDeleteItem: (itemId: string) => void; onAddItem: (title: string) => void; onToggle: (collapsed: boolean) => void
+  userId?: string
 }) {
   const [collapsed, setCollapsed] = useState(group.collapsed === 1)
   const [addingItem, setAddingItem] = useState(false)
@@ -169,7 +171,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
       </td>
       {columns.map(col => (
         <td key={col.id} style={{ borderRight: `1px solid ${BORDER}`, padding: 0, width: col.width, minWidth: col.width, maxWidth: col.width, position: 'relative' }}>
-          <MondayCell col={col} value={item.data[col.id]} onChange={v => onUpdateItem(item.id, undefined, { [col.id]: v })} />
+          <MondayCell col={col} value={item.data[col.id]} onChange={v => onUpdateItem(item.id, undefined, { [col.id]: v })} userId={userId} />
         </td>
       ))}
       <td style={{ width: 32 }} />
@@ -177,7 +179,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
   )
 }
 
-export default function MondayTable({ groups, columns, items, onUpdateItem, onDeleteItem, onAddItem, onAddGroup, onToggleGroup }: Props) {
+export default function MondayTable({ groups, columns, items, onUpdateItem, onDeleteItem, onAddItem, onAddGroup, onToggleGroup, userId }: Props) {
   const [search, setSearch] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [showSort, setShowSort] = useState(false)
@@ -374,7 +376,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                   onSelectAll={(ids) => handleSelectAll(ids)}
                   onUpdateItem={onUpdateItem} onDeleteItem={onDeleteItem}
                   onAddItem={(title) => onAddItem(group.id, title)}
-                  onToggle={(c) => onToggleGroup(group.id, c)} />
+                  onToggle={(c) => onToggleGroup(group.id, c)} userId={userId} />
               )
             })}
             <tbody>

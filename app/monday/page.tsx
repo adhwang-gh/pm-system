@@ -211,7 +211,7 @@ function InboxView() {
 }
 
 /* ─── Who are you modal ─── */
-function WhoAreYouModal({ onDone }: { onDone: (name: string, memberId: string) => void }) {
+function WhoAreYouModal({ onDone, userId }: { onDone: (name: string, memberId: string) => void; userId: string }) {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -219,7 +219,12 @@ function WhoAreYouModal({ onDone }: { onDone: (name: string, memberId: string) =
     const n = name.trim()
     if (!n) return
     setLoading(true)
-    const res = await fetch('/monday/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n }) })
+    // Use the pre-generated userId as the member id too
+    const res = await fetch('/monday/api/members', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId },
+      body: JSON.stringify({ name: n, id: userId }),
+    })
     const m = await res.json()
     localStorage.setItem('pm_user_name', n)
     localStorage.setItem('pm_user_member_id', m.id)
@@ -239,7 +244,7 @@ function WhoAreYouModal({ onDone }: { onDone: (name: string, memberId: string) =
           style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '11px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: name.trim() && !loading ? 1 : 0.5 }}>
           {loading ? 'Adding you…' : 'Enter workspace'}
         </button>
-        <button onClick={() => onDone('Guest', '')}
+        <button onClick={() => { localStorage.setItem('pm_user_name', 'Guest'); onDone('Guest', userId) }}
           style={{ width: '100%', marginTop: 10, background: 'none', border: 'none', color: '#555', fontSize: 12, cursor: 'pointer', padding: '6px 0' }}>
           Continue as guest
         </button>
@@ -267,28 +272,39 @@ export default function PMSystemPage() {
   const [myMemberId, setMyMemberId] = useState<string>('')
   const [showWhoModal, setShowWhoModal] = useState(false)
   const [memberCount, setMemberCount] = useState(0)
+  const [userId, setUserId] = useState<string>('')
 
+  // Generate or load userId on mount — always show modal for new visitors
   useEffect(() => {
-    const saved = localStorage.getItem('pm_user_name')
-    if (saved) {
-      setUserName(saved)
-      setMyMemberId(localStorage.getItem('pm_user_member_id') ?? '')
+    let uid = localStorage.getItem('pm_user_id')
+    if (!uid) {
+      uid = crypto.randomUUID()
+      localStorage.setItem('pm_user_id', uid)
+    }
+    setUserId(uid)
+    const savedName = localStorage.getItem('pm_user_name')
+    if (savedName) {
+      setUserName(savedName)
+      setMyMemberId(localStorage.getItem('pm_user_member_id') ?? uid)
     } else {
       setShowWhoModal(true)
     }
   }, [])
 
+  const pmHeaders = userId ? { 'X-Pm-User-Id': userId } : {}
+
   useEffect(() => {
-    fetch('/monday/api/boards').then(r => r.json()).then((data: MBoard[]) => {
+    if (!userId) return
+    fetch('/monday/api/boards', { headers: pmHeaders }).then(r => r.json()).then((data: MBoard[]) => {
       setBoards(data)
       if (data.length > 0) setSelectedBoardId(data[0].id)
     })
-    fetch('/monday/api/members').then(r => r.json()).then((data: unknown[]) => setMemberCount(Array.isArray(data) ? data.length : 0))
-  }, [])
+    fetch('/monday/api/members', { headers: pmHeaders }).then(r => r.json()).then((data: unknown[]) => setMemberCount(Array.isArray(data) ? data.length : 0))
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadBoard = useCallback(async (id: string) => {
     setLoading(true)
-    const res = await fetch(`/monday/api/boards/${id}`)
+    const res = await fetch(`/monday/api/boards/${id}`, { headers: pmHeaders })
     const data = await res.json()
     setBoardData(data)
     setAllBoardData(prev => ({ ...prev, [id]: data }))
@@ -301,7 +317,7 @@ export default function PMSystemPage() {
   useEffect(() => {
     boards.forEach(b => {
       if (!allBoardData[b.id]) {
-        fetch(`/monday/api/boards/${b.id}`).then(r => r.json()).then(data => {
+        fetch(`/monday/api/boards/${b.id}`, { headers: pmHeaders }).then(r => r.json()).then(data => {
           setAllBoardData(prev => ({ ...prev, [b.id]: data }))
         })
       }
@@ -309,7 +325,7 @@ export default function PMSystemPage() {
   }, [boards]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addBoard = async (title: string) => {
-    const res = await fetch('/monday/api/boards', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }) })
+    const res = await fetch('/monday/api/boards', { method: 'POST', headers: { 'Content-Type': 'application/json', ...pmHeaders }, body: JSON.stringify({ title }) })
     const board = await res.json()
     setBoards(prev => [...prev, board])
     setSelectedBoardId(board.id)
@@ -417,7 +433,7 @@ export default function PMSystemPage() {
           )}
           {activeNav === 'mywork' && <MyWorkView allBoardData={allBoardData} myMemberId={myMemberId} />}
           {activeNav === 'inbox' && <InboxView />}
-          {activeNav === 'updates' && <WeeklyUpdatesView />}
+          {activeNav === 'updates' && <WeeklyUpdatesView userId={userId} />}
 
           {activeNav === 'board' && (
             loading || !boardData ? (
@@ -486,6 +502,7 @@ export default function PMSystemPage() {
                   onAddItem={addItem}
                   onAddGroup={addGroup}
                   onToggleGroup={toggleGroup}
+                  userId={userId}
                 />
               </>
             )
@@ -493,7 +510,7 @@ export default function PMSystemPage() {
         </div>
       </div>
 
-      {showWhoModal && <WhoAreYouModal onDone={(name, id) => { setUserName(name); setMyMemberId(id); setShowWhoModal(false) }} />}
+      {showWhoModal && userId && <WhoAreYouModal userId={userId} onDone={(name, id) => { setUserName(name); setMyMemberId(id); setShowWhoModal(false) }} />}
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       {showIntegrate && selectedBoardId && <IntegrateModal boardId={selectedBoardId} onClose={() => setShowIntegrate(false)} />}
       {showAutomate && selectedBoardId && <AutomateModal boardId={selectedBoardId} onClose={() => setShowAutomate(false)} />}

@@ -21,6 +21,7 @@ interface Props {
   col: MColumn
   value: string | number | undefined
   onChange: (v: string | number) => void
+  userId?: string
 }
 
 function MemberAvatar({ member, size = 28 }: { member: PMember; size?: number }) {
@@ -41,7 +42,7 @@ function getStatusValues(col: MColumn): string[] {
   return opts?.values ?? []
 }
 
-export default function MondayCell({ col, value, onChange }: Props) {
+export default function MondayCell({ col, value, onChange, userId }: Props) {
   const [editing, setEditing] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [search, setSearch] = useState('')
@@ -54,7 +55,8 @@ export default function MondayCell({ col, value, onChange }: Props) {
   // Fetch members when person picker opens
   useEffect(() => {
     if (col.type === 'person' && editing) {
-      fetch('/monday/api/members').then(r => r.json()).then(setMembers).catch(() => {})
+      const h = userId ? { 'X-Pm-User-Id': userId } : {}
+      fetch('/monday/api/members', { headers: h }).then(r => r.json()).then(setMembers).catch(() => {})
     }
   }, [col.type, editing])
 
@@ -114,7 +116,8 @@ export default function MondayCell({ col, value, onChange }: Props) {
     const addMember = async () => {
       const name = addingName.trim()
       if (!name) return
-      const res = await fetch('/monday/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+      const h = userId ? { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId } : { 'Content-Type': 'application/json' }
+    const res = await fetch('/monday/api/members', { method: 'POST', headers: h, body: JSON.stringify({ name }) })
       const m = await res.json()
       setMembers(prev => [...prev, m])
       toggle(m.id)

@@ -122,7 +122,7 @@ function MemberCard({ member, update, isEditing, onEdit, onSave, onCancel, isMe 
   )
 }
 
-export default function WeeklyUpdatesView() {
+export default function WeeklyUpdatesView({ userId }: { userId?: string }) {
   const [members, setMembers] = useState<PMember[]>([])
   const [updates, setUpdates] = useState<Update[]>([])
   const [weekOf, setWeekOf] = useState(() => getSunday(new Date()))
@@ -133,10 +133,12 @@ export default function WeeklyUpdatesView() {
     setMyMemberId(localStorage.getItem('pm_user_member_id') ?? '')
   }, [])
 
+  const pmHeaders = userId ? { 'X-Pm-User-Id': userId } : {}
+
   const load = useCallback(() => {
-    fetch('/monday/api/members').then(r => r.json()).then(setMembers)
+    fetch('/monday/api/members', { headers: pmHeaders }).then(r => r.json()).then(setMembers)
     fetch(`/monday/api/updates?week_of=${weekOf}`).then(r => r.json()).then(setUpdates)
-  }, [weekOf])
+  }, [weekOf, userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load() }, [load])
 

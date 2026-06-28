@@ -9,6 +9,7 @@ export async function initMondaySchema() {
   await turso.batch([
     { sql: `CREATE TABLE IF NOT EXISTS monday_boards (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'legacy',
       title TEXT NOT NULL DEFAULT 'Untitled Board',
       description TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now'))
@@ -85,23 +86,28 @@ export async function initMondaySchema() {
     )`, args: [] },
     { sql: `CREATE TABLE IF NOT EXISTS pm_members (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'legacy',
       name TEXT NOT NULL,
       initials TEXT NOT NULL,
       color TEXT DEFAULT '#8A8478',
       created_at TEXT DEFAULT (datetime('now'))
     )`, args: [] },
   ], 'write')
+
+  // Migrations: add user_id if tables existed without it
+  try { await turso.execute("ALTER TABLE monday_boards ADD COLUMN user_id TEXT NOT NULL DEFAULT 'legacy'") } catch {}
+  try { await turso.execute("ALTER TABLE pm_members ADD COLUMN user_id TEXT NOT NULL DEFAULT 'legacy'") } catch {}
+
   _initialized = true
-  await seedMondayIfEmpty(turso)
 }
 
-async function seedMondayIfEmpty(turso: ReturnType<typeof getTurso>) {
-  const res = await turso.execute('SELECT COUNT(*) as c FROM monday_boards')
-  const count = Number(res.rows[0]?.c ?? 0)
-  if (count > 0) return
+export async function seedForUser(userId: string) {
+  const turso = getTurso()
+  const res = await turso.execute({ sql: 'SELECT COUNT(*) as c FROM monday_boards WHERE user_id = ?', args: [userId] })
+  if (Number(res.rows[0]?.c ?? 0) > 0) return
 
   const boardId = randomUUID()
-  await turso.execute({ sql: 'INSERT INTO monday_boards (id, title, description) VALUES (?, ?, ?)', args: [boardId, 'High-level projects overview', 'Track all major projects across the organization'] })
+  await turso.execute({ sql: 'INSERT INTO monday_boards (id, user_id, title, description) VALUES (?, ?, ?, ?)', args: [boardId, userId, 'Project Overview', 'Track all major projects across your workspace'] })
 
   const cols = [
     { id: randomUUID(), title: 'PM', type: 'person', width: 60, options: '[]' },
@@ -127,21 +133,18 @@ async function seedMondayIfEmpty(turso: ReturnType<typeof getTurso>) {
   }
 
   const items = [
-    { group: 0, title: 'Website Revamp for Q3 Campaign', pm: '', overview: 'Full redesign of the company website for the Q3 marketing push.', status: "Haven't started yet", priority: 'Medium', phase: 'Upcoming', start: '2025-07-01', end: '2025-09-15' },
-    { group: 0, title: 'Cloud Infrastructure Migration', pm: '', overview: 'Complete cloud migration of on-prem servers.', status: "Haven't started yet", priority: 'Low', phase: 'Upcoming', start: '2025-05-29', end: '2025-12-01' },
-    { group: 1, title: 'Sustainability Initiative Kickoff', pm: '', overview: 'Company-wide sustainability roadmap launch.', status: 'On track', priority: 'Medium', phase: 'Ongoing', start: '2025-05-20', end: '2025-08-31' },
-    { group: 1, title: 'Mobile App Redesign', pm: '', overview: 'Full redesign of the mobile app UX based on user research.', status: 'At risk', priority: 'High', phase: 'Ongoing', start: '2025-06-01', end: '2025-09-01' },
-    { group: 2, title: 'AI-Powered Customer Support Bot', pm: '', overview: 'Bot handles Tier-1 customer queries automatically.', status: 'Done', priority: 'High', phase: 'Completed', start: '2025-06-01', end: '2025-06-30' },
-    { group: 2, title: 'Q1 Financial Audit', pm: '', overview: 'Annual financial audit completed ahead of schedule.', status: 'Done', priority: 'Medium', phase: 'Completed', start: '2025-01-15', end: '2025-03-31' },
+    { group: 0, title: 'Website Revamp', overview: 'Full redesign of the company website.', status: "Haven't started yet", priority: 'Medium', phase: 'Upcoming', start: '2025-07-01', end: '2025-09-15' },
+    { group: 0, title: 'Cloud Migration', overview: 'Migrate on-prem servers to the cloud.', status: "Haven't started yet", priority: 'Low', phase: 'Upcoming', start: '2025-05-29', end: '2025-12-01' },
+    { group: 1, title: 'Mobile App Redesign', overview: 'Full redesign of the mobile app UX.', status: 'On track', priority: 'High', phase: 'Ongoing', start: '2025-06-01', end: '2025-09-01' },
+    { group: 2, title: 'Q1 Financial Audit', overview: 'Annual financial audit completed ahead of schedule.', status: 'Done', priority: 'Medium', phase: 'Completed', start: '2025-01-15', end: '2025-03-31' },
   ]
-
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     const g = groups[item.group]
     await turso.execute({
       sql: 'INSERT INTO monday_items (id, board_id, group_id, title, data, position) VALUES (?, ?, ?, ?, ?, ?)',
       args: [randomUUID(), boardId, g.id, item.title, JSON.stringify({
-        [pmCol.id]: item.pm,
+        [pmCol.id]: '',
         [overviewCol.id]: item.overview,
         [statusCol.id]: item.status,
         [priorityCol.id]: item.priority,
