@@ -1,38 +1,36 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getTurso, toRows } from '@/lib/tursoClient'
 import { initMondaySchema } from '@/lib/mondayDb'
 import { randomUUID } from 'crypto'
 
 const INTEGRATION_TYPES = ['slack', 'zapier', 'gcal', 'github', 'figma', 'gmail']
 
-function ensureDefaults(db: ReturnType<typeof getDb>, boardId: string) {
-  INTEGRATION_TYPES.forEach(type => {
-    const existing = db.prepare('SELECT id FROM monday_integrations WHERE board_id = ? AND type = ?').get(boardId, type)
-    if (!existing) {
-      db.prepare('INSERT INTO monday_integrations (id, board_id, type, connected, config) VALUES (?, ?, ?, 0, ?)').run(randomUUID(), boardId, type, '{}')
+async function ensureDefaults(turso: ReturnType<typeof getTurso>, boardId: string) {
+  for (const type of INTEGRATION_TYPES) {
+    const existing = await turso.execute({ sql: 'SELECT id FROM monday_integrations WHERE board_id = ? AND type = ?', args: [boardId, type] })
+    if (existing.rows.length === 0) {
+      await turso.execute({ sql: 'INSERT INTO monday_integrations (id, board_id, type, connected, config) VALUES (?, ?, ?, 0, ?)', args: [randomUUID(), boardId, type, '{}'] })
     }
-  })
+  }
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  initMondaySchema()
+  await initMondaySchema()
   const { id } = await params
-  const db = getDb()
-  ensureDefaults(db, id)
-  const rows = db.prepare('SELECT * FROM monday_integrations WHERE board_id = ?').all(id)
-  return NextResponse.json((rows as Record<string, unknown>[]).map((r) => ({ ...r, config: JSON.parse(r.config as string) })))
+  const turso = getTurso()
+  await ensureDefaults(turso, id)
+  const res = await turso.execute({ sql: 'SELECT * FROM monday_integrations WHERE board_id = ?', args: [id] })
+  return NextResponse.json(toRows(res.rows).map(r => ({ ...r, config: JSON.parse(r.config as string) })))
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  initMondaySchema()
-  const { id } = await params
-  const db = getDb()
+  await initMondaySchema()
+  await params
+  const turso = getTurso()
   const body = await req.json()
   const { integrationId, connected, config } = body
-
-  if (connected !== undefined) db.prepare("UPDATE monday_integrations SET connected = ?, updated_at = datetime('now') WHERE id = ?").run(connected ? 1 : 0, integrationId)
-  if (config !== undefined) db.prepare("UPDATE monday_integrations SET config = ?, updated_at = datetime('now') WHERE id = ?").run(JSON.stringify(config), integrationId)
-
-  const row = db.prepare('SELECT * FROM monday_integrations WHERE id = ?').get(integrationId) as Record<string, unknown>
-  return NextResponse.json({ ...row, config: JSON.parse(row.config as string) })
+  if (connected !== undefined) await turso.execute({ sql: "UPDATE monday_integrations SET connected = ?, updated_at = datetime('now') WHERE id = ?", args: [connected ? 1 : 0, integrationId] })
+  if (config !== undefined) await turso.execute({ sql: "UPDATE monday_integrations SET config = ?, updated_at = datetime('now') WHERE id = ?", args: [JSON.stringify(config), integrationId] })
+  const row = (await turso.execute({ sql: 'SELECT * FROM monday_integrations WHERE id = ?', args: [integrationId] })).rows[0]
+  return NextResponse.json({ ...Object.fromEntries(Object.entries(row)), config: JSON.parse(row.config as string) })
 }

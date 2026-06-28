@@ -1,48 +1,42 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getTurso, toRows } from '@/lib/tursoClient'
 import { initMondaySchema } from '@/lib/mondayDb'
 import { randomUUID } from 'crypto'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  initMondaySchema()
+  await initMondaySchema()
   const { id } = await params
-  const db = getDb()
-  const rows = db.prepare('SELECT * FROM monday_automations WHERE board_id = ? ORDER BY created_at ASC').all(id)
-  return NextResponse.json((rows as Record<string, unknown>[]).map((r) => ({
-    ...r,
-    trigger_config: JSON.parse(r.trigger_config as string),
-    action_config: JSON.parse(r.action_config as string),
-  })))
+  const turso = getTurso()
+  const res = await turso.execute({ sql: 'SELECT * FROM monday_automations WHERE board_id = ? ORDER BY created_at ASC', args: [id] })
+  return NextResponse.json(toRows(res.rows).map(r => ({ ...r, trigger_config: JSON.parse(r.trigger_config as string), action_config: JSON.parse(r.action_config as string) })))
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  initMondaySchema()
+  await initMondaySchema()
   const { id } = await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   const { name, trigger_type, trigger_config = {}, action_type, action_config = {} } = body
   const automId = randomUUID()
-  db.prepare('INSERT INTO monday_automations (id, board_id, name, trigger_type, trigger_config, action_type, action_config) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-    automId, id, name, trigger_type, JSON.stringify(trigger_config), action_type, JSON.stringify(action_config)
-  )
-  const row = db.prepare('SELECT * FROM monday_automations WHERE id = ?').get(automId) as Record<string, unknown>
-  return NextResponse.json({ ...row, trigger_config: JSON.parse(row.trigger_config as string), action_config: JSON.parse(row.action_config as string) }, { status: 201 })
+  await turso.execute({ sql: 'INSERT INTO monday_automations (id, board_id, name, trigger_type, trigger_config, action_type, action_config) VALUES (?, ?, ?, ?, ?, ?, ?)', args: [automId, id, name, trigger_type, JSON.stringify(trigger_config), action_type, JSON.stringify(action_config)] })
+  const row = (await turso.execute({ sql: 'SELECT * FROM monday_automations WHERE id = ?', args: [automId] })).rows[0]
+  return NextResponse.json({ ...Object.fromEntries(Object.entries(row)), trigger_config: JSON.parse(row.trigger_config as string), action_config: JSON.parse(row.action_config as string) }, { status: 201 })
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   const { automId, active } = body
-  if (active !== undefined) db.prepare('UPDATE monday_automations SET active = ? WHERE id = ?').run(active ? 1 : 0, automId)
-  const row = db.prepare('SELECT * FROM monday_automations WHERE id = ?').get(automId) as Record<string, unknown>
-  return NextResponse.json({ ...row, trigger_config: JSON.parse(row.trigger_config as string), action_config: JSON.parse(row.action_config as string) })
+  if (active !== undefined) await turso.execute({ sql: 'UPDATE monday_automations SET active = ? WHERE id = ?', args: [active ? 1 : 0, automId] })
+  const row = (await turso.execute({ sql: 'SELECT * FROM monday_automations WHERE id = ?', args: [automId] })).rows[0]
+  return NextResponse.json({ ...Object.fromEntries(Object.entries(row)), trigger_config: JSON.parse(row.trigger_config as string), action_config: JSON.parse(row.action_config as string) })
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await params
-  const db = getDb()
+  const turso = getTurso()
   const { automId } = await req.json()
-  db.prepare('DELETE FROM monday_automations WHERE id = ?').run(automId)
+  await turso.execute({ sql: 'DELETE FROM monday_automations WHERE id = ?', args: [automId] })
   return NextResponse.json({ ok: true })
 }

@@ -1,31 +1,33 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getTurso, toRows } from '@/lib/tursoClient'
 import { initMondaySchema } from '@/lib/mondayDb'
-import { randomUUID } from 'crypto'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  initMondaySchema()
-  const db = getDb()
-  const board = db.prepare('SELECT * FROM monday_boards WHERE id = ?').get(id)
-  const groups = db.prepare('SELECT * FROM monday_groups WHERE board_id = ? ORDER BY position').all(id)
-  const columns = db.prepare('SELECT * FROM monday_columns WHERE board_id = ? ORDER BY position').all(id) as Array<{ options: string } & Record<string, unknown>>
-  const items = db.prepare('SELECT * FROM monday_items WHERE board_id = ? ORDER BY position').all(id) as Array<{ data: string } & Record<string, unknown>>
+  await initMondaySchema()
+  const turso = getTurso()
+  const [boardRes, groupsRes, columnsRes, itemsRes] = await Promise.all([
+    turso.execute({ sql: 'SELECT * FROM monday_boards WHERE id = ?', args: [id] }),
+    turso.execute({ sql: 'SELECT * FROM monday_groups WHERE board_id = ? ORDER BY position', args: [id] }),
+    turso.execute({ sql: 'SELECT * FROM monday_columns WHERE board_id = ? ORDER BY position', args: [id] }),
+    turso.execute({ sql: 'SELECT * FROM monday_items WHERE board_id = ? ORDER BY position', args: [id] }),
+  ])
 
-  return NextResponse.json({
-    board,
-    groups,
-    columns: columns.map(c => ({ ...c, options: (() => { try { return JSON.parse(c.options) } catch { return [] } })() })),
-    items: items.map(it => ({ ...it, data: (() => { try { return JSON.parse(it.data as string) } catch { return {} } })() })),
-  })
+  const board = boardRes.rows[0] ? Object.fromEntries(Object.entries(boardRes.rows[0])) : null
+  const groups = toRows(groupsRes.rows)
+  const columns = toRows(columnsRes.rows).map(c => ({ ...c, options: (() => { try { return JSON.parse(c.options as string) } catch { return [] } })() }))
+  const items = toRows(itemsRes.rows).map(it => ({ ...it, data: (() => { try { return JSON.parse(it.data as string) } catch { return {} } })() }))
+
+  return NextResponse.json({ board, groups, columns, items })
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   if (body.title !== undefined) {
-    db.prepare('UPDATE monday_boards SET title = ? WHERE id = ?').run(body.title, id)
+    await turso.execute({ sql: 'UPDATE monday_boards SET title = ? WHERE id = ?', args: [body.title, id] })
   }
-  return NextResponse.json(db.prepare('SELECT * FROM monday_boards WHERE id = ?').get(id))
+  const board = (await turso.execute({ sql: 'SELECT * FROM monday_boards WHERE id = ?', args: [id] })).rows[0]
+  return NextResponse.json(Object.fromEntries(Object.entries(board)))
 }

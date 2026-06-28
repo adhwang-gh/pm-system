@@ -1,32 +1,29 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getTurso, toRows } from '@/lib/tursoClient'
 import { randomUUID } from 'crypto'
 
-type DbRow = Record<string, unknown>
-
-async function fireWebhooks(boardId: string, eventType: string, payload: Record<string, unknown>) {
-  const db = getDb()
+async function fireWebhooks(turso: ReturnType<typeof getTurso>, boardId: string, eventType: string, payload: Record<string, unknown>) {
   const webhookTypes = ['slack', 'zapier']
-  webhookTypes.forEach(type => {
-    const integration = db.prepare("SELECT * FROM monday_integrations WHERE board_id = ? AND type = ? AND connected = 1").get(boardId, type) as DbRow | undefined
-    if (!integration) return
+  for (const type of webhookTypes) {
+    const res = await turso.execute({ sql: 'SELECT * FROM monday_integrations WHERE board_id = ? AND type = ? AND connected = 1', args: [boardId, type] })
+    const integration = res.rows[0]
+    if (!integration) continue
     const config = JSON.parse(integration.config as string) as { webhook_url?: string }
-    if (!config.webhook_url) return
-    // Fire and forget — don't await so it doesn't block the response
+    if (!config.webhook_url) continue
     fetch(config.webhook_url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source: 'PM System', board_id: boardId, event: eventType, ...payload }),
-    }).catch(() => {}) // ignore errors (user may have stale URL)
-  })
+    }).catch(() => {})
+  }
 }
 
-function applyAutomations(boardId: string, itemId: string, oldData: Record<string, unknown>, newData: Record<string, unknown>, title: string): Record<string, unknown> {
-  const db = getDb()
-  const automations = db.prepare("SELECT * FROM monday_automations WHERE board_id = ? AND active = 1").all(boardId) as DbRow[]
+async function applyAutomations(turso: ReturnType<typeof getTurso>, boardId: string, itemId: string, oldData: Record<string, unknown>, newData: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const res = await turso.execute({ sql: 'SELECT * FROM monday_automations WHERE board_id = ? AND active = 1', args: [boardId] })
+  const automations = toRows(res.rows)
   let merged = { ...newData }
 
-  automations.forEach(auto => {
+  for (const auto of automations) {
     const tc = JSON.parse(auto.trigger_config as string) as { col_id?: string; value?: string }
     const ac = JSON.parse(auto.action_config as string) as { col_id?: string; value?: string; member_key?: string }
 
@@ -34,85 +31,73 @@ function applyAutomations(boardId: string, itemId: string, oldData: Record<strin
       const oldVal = String(oldData[tc.col_id] ?? '')
       const newVal = String(merged[tc.col_id] ?? '')
       if (oldVal !== tc.value && newVal === tc.value) {
-        // Trigger fired — apply action
-        if (auto.action_type === 'set_field' && ac.col_id && ac.value !== undefined) {
-          merged[ac.col_id] = ac.value
-        }
-        if (auto.action_type === 'assign_pm' && ac.col_id && ac.member_key) {
-          merged[ac.col_id] = ac.member_key
-        }
-        // Update run count
-        db.prepare("UPDATE monday_automations SET run_count = run_count + 1, last_run = datetime('now') WHERE id = ?").run(auto.id)
+        if (auto.action_type === 'set_field' && ac.col_id && ac.value !== undefined) merged[ac.col_id] = ac.value
+        if (auto.action_type === 'assign_pm' && ac.col_id && ac.member_key) merged[ac.col_id] = ac.member_key
+        await turso.execute({ sql: "UPDATE monday_automations SET run_count = run_count + 1, last_run = datetime('now') WHERE id = ?", args: [auto.id as string] })
       }
     }
-  })
-
+  }
   return merged
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   const { group_id, title = '', data = {} } = body
 
-  // Apply item_created automations
-  const automations = db.prepare("SELECT * FROM monday_automations WHERE board_id = ? AND active = 1 AND trigger_type = 'item_created'").all(id) as DbRow[]
+  const automRes = await turso.execute({ sql: "SELECT * FROM monday_automations WHERE board_id = ? AND active = 1 AND trigger_type = 'item_created'", args: [id] })
+  const automations = toRows(automRes.rows)
   let finalData = { ...data }
-  automations.forEach(auto => {
+  for (const auto of automations) {
     const ac = JSON.parse(auto.action_config as string) as { col_id?: string; value?: string; member_key?: string }
-    if (auto.action_type === 'assign_pm' && ac.col_id && ac.member_key) {
-      finalData[ac.col_id] = ac.member_key
-    }
-    if (auto.action_type === 'set_field' && ac.col_id && ac.value !== undefined) {
-      finalData[ac.col_id] = ac.value
-    }
-    db.prepare("UPDATE monday_automations SET run_count = run_count + 1, last_run = datetime('now') WHERE id = ?").run(auto.id)
-  })
+    if (auto.action_type === 'assign_pm' && ac.col_id && ac.member_key) finalData[ac.col_id] = ac.member_key
+    if (auto.action_type === 'set_field' && ac.col_id && ac.value !== undefined) finalData[ac.col_id] = ac.value
+    await turso.execute({ sql: "UPDATE monday_automations SET run_count = run_count + 1, last_run = datetime('now') WHERE id = ?", args: [auto.id as string] })
+  }
 
   const itemId = randomUUID()
-  const maxPos = (db.prepare('SELECT MAX(position) as m FROM monday_items WHERE board_id = ? AND group_id = ?').get(id, group_id) as { m: number | null }).m ?? -1
-  db.prepare('INSERT INTO monday_items (id, board_id, group_id, title, data, position) VALUES (?, ?, ?, ?, ?, ?)').run(itemId, id, group_id, title, JSON.stringify(finalData), maxPos + 1)
-  const item = db.prepare('SELECT * FROM monday_items WHERE id = ?').get(itemId) as DbRow
-  await fireWebhooks(id, 'item_created', { item_title: title, group_id })
-  return NextResponse.json({ ...item, data: JSON.parse(item.data as string) }, { status: 201 })
+  const maxPosRes = await turso.execute({ sql: 'SELECT MAX(position) as m FROM monday_items WHERE board_id = ? AND group_id = ?', args: [id, group_id] })
+  const maxPos = Number(maxPosRes.rows[0]?.m ?? -1)
+  await turso.execute({ sql: 'INSERT INTO monday_items (id, board_id, group_id, title, data, position) VALUES (?, ?, ?, ?, ?, ?)', args: [itemId, id, group_id, title, JSON.stringify(finalData), maxPos + 1] })
+  const item = (await turso.execute({ sql: 'SELECT * FROM monday_items WHERE id = ?', args: [itemId] })).rows[0]
+  await fireWebhooks(turso, id, 'item_created', { item_title: title, group_id })
+  return NextResponse.json({ ...Object.fromEntries(Object.entries(item)), data: JSON.parse(item.data as string) }, { status: 201 })
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: boardId } = await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   const { itemId, title, data } = body
 
-  if (title !== undefined) db.prepare('UPDATE monday_items SET title = ? WHERE id = ?').run(title, itemId)
+  if (title !== undefined) await turso.execute({ sql: 'UPDATE monday_items SET title = ? WHERE id = ?', args: [title, itemId] })
 
   if (data !== undefined) {
-    const existing = db.prepare('SELECT data, title FROM monday_items WHERE id = ?').get(itemId) as { data: string; title: string } | undefined
+    const existingRes = await turso.execute({ sql: 'SELECT data, title FROM monday_items WHERE id = ?', args: [itemId] })
+    const existing = existingRes.rows[0]
     if (existing) {
-      const oldData = JSON.parse(existing.data)
+      const oldData = JSON.parse(existing.data as string)
       const merged = { ...oldData, ...data }
-      // Apply automations (may mutate merged)
-      const afterAuto = applyAutomations(boardId, itemId, oldData, merged, existing.title)
-      db.prepare('UPDATE monday_items SET data = ? WHERE id = ?').run(JSON.stringify(afterAuto), itemId)
-      // Fire webhooks for status changes
+      const afterAuto = await applyAutomations(turso, boardId, itemId, oldData, merged)
+      await turso.execute({ sql: 'UPDATE monday_items SET data = ? WHERE id = ?', args: [JSON.stringify(afterAuto), itemId] })
       const changedKeys = Object.keys(data).filter(k => oldData[k] !== data[k])
-      if (changedKeys.length > 0) {
-        await fireWebhooks(boardId, 'item_updated', { item_id: itemId, changed_fields: changedKeys })
-      }
+      if (changedKeys.length > 0) await fireWebhooks(turso, boardId, 'item_updated', { item_id: itemId, changed_fields: changedKeys })
     }
   }
 
-  const item = db.prepare('SELECT * FROM monday_items WHERE id = ?').get(itemId) as DbRow
-  return NextResponse.json({ ...item, data: JSON.parse(item.data as string) })
+  const item = (await turso.execute({ sql: 'SELECT * FROM monday_items WHERE id = ?', args: [itemId] })).rows[0]
+  return NextResponse.json({ ...Object.fromEntries(Object.entries(item)), data: JSON.parse(item.data as string) })
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id: boardId } = await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   const { itemId } = body
-  const item = db.prepare('SELECT title FROM monday_items WHERE id = ?').get(itemId) as { title: string } | undefined
-  db.prepare('DELETE FROM monday_items WHERE id = ?').run(itemId)
-  await fireWebhooks(boardId, 'item_deleted', { item_title: item?.title ?? '' })
+  const itemRes = await turso.execute({ sql: 'SELECT title FROM monday_items WHERE id = ?', args: [itemId] })
+  const item = itemRes.rows[0]
+  await turso.execute({ sql: 'DELETE FROM monday_items WHERE id = ?', args: [itemId] })
+  await fireWebhooks(turso, boardId, 'item_deleted', { item_title: item?.title ?? '' })
   return NextResponse.json({ ok: true })
 }

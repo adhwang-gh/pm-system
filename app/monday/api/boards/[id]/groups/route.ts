@@ -1,27 +1,29 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getTurso } from '@/lib/tursoClient'
 import { randomUUID } from 'crypto'
 
-const GROUP_COLORS = ['#0073EA', '#FDAB3D', '#00C875', '#E2445C', '#FF158A', '#9D99B9', '#401694']
+const GROUP_COLORS = ['#52504C', '#9C7C32', '#C9A24B', '#B0221B', '#8A8478']
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const db = getDb()
+  const turso = getTurso()
   const body = await req.json()
   const gid = randomUUID()
-  const maxPos = (db.prepare('SELECT MAX(position) as m FROM monday_groups WHERE board_id = ?').get(id) as { m: number | null }).m ?? -1
-  const colorIdx = ((maxPos + 1) % GROUP_COLORS.length)
-  db.prepare('INSERT INTO monday_groups (id, board_id, title, color, position) VALUES (?, ?, ?, ?, ?)').run(gid, id, body.title ?? 'New Group', body.color ?? GROUP_COLORS[colorIdx], maxPos + 1)
-  return NextResponse.json(db.prepare('SELECT * FROM monday_groups WHERE id = ?').get(gid), { status: 201 })
+  const maxPosRes = await turso.execute({ sql: 'SELECT MAX(position) as m FROM monday_groups WHERE board_id = ?', args: [id] })
+  const maxPos = Number(maxPosRes.rows[0]?.m ?? -1)
+  const colorIdx = (maxPos + 1) % GROUP_COLORS.length
+  await turso.execute({ sql: 'INSERT INTO monday_groups (id, board_id, title, color, position) VALUES (?, ?, ?, ?, ?)', args: [gid, id, body.title ?? 'New Group', body.color ?? GROUP_COLORS[colorIdx], maxPos + 1] })
+  const group = (await turso.execute({ sql: 'SELECT * FROM monday_groups WHERE id = ?', args: [gid] })).rows[0]
+  return NextResponse.json(Object.fromEntries(Object.entries(group)), { status: 201 })
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const db = getDb()
+  await params
+  const turso = getTurso()
   const body = await req.json()
-  // body: { groupId, title?, collapsed? }
   const { groupId, title, collapsed } = body
-  if (title !== undefined) db.prepare('UPDATE monday_groups SET title = ? WHERE id = ?').run(title, groupId)
-  if (collapsed !== undefined) db.prepare('UPDATE monday_groups SET collapsed = ? WHERE id = ?').run(collapsed ? 1 : 0, groupId)
-  return NextResponse.json(db.prepare('SELECT * FROM monday_groups WHERE id = ?').get(groupId))
+  if (title !== undefined) await turso.execute({ sql: 'UPDATE monday_groups SET title = ? WHERE id = ?', args: [title, groupId] })
+  if (collapsed !== undefined) await turso.execute({ sql: 'UPDATE monday_groups SET collapsed = ? WHERE id = ?', args: [collapsed ? 1 : 0, groupId] })
+  const group = (await turso.execute({ sql: 'SELECT * FROM monday_groups WHERE id = ?', args: [groupId] })).rows[0]
+  return NextResponse.json(Object.fromEntries(Object.entries(group)))
 }
