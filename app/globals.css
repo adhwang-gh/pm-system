@@ -1,26 +1,53 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #111118;
+  --foreground: #e5e7eb;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Tiptap editor placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #374151;
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Dark prose overrides */
+.prose-invert .ProseMirror h1,
+.prose-invert .ProseMirror h2,
+.prose-invert .ProseMirror h3 {
+  color: #f9fafb;
+}
+.ProseMirror h1 { font-size: 2em; font-weight: bold; margin: 0.5em 0; }
+.ProseMirror h2 { font-size: 1.5em; font-weight: bold; margin: 0.5em 0; }
+.ProseMirror h3 { font-size: 1.25em; font-weight: bold; margin: 0.5em 0; }
+.ProseMirror ul { list-style: disc; padding-left: 1.5em; }
+.ProseMirror ol { list-style: decimal; padding-left: 1.5em; }
+.ProseMirror p { color: #d1d5db; line-height: 1.75; }
+.ProseMirror li { color: #d1d5db; }
+.ProseMirror blockquote { border-left: 3px solid #374151; padding-left: 1em; color: #9ca3af; }
+.ProseMirror pre { background: #0f0f17; color: #e5e7eb; padding: 1em; border-radius: 8px; overflow-x: auto; border: 1px solid rgba(255,255,255,0.08); }
+.ProseMirror code { background: rgba(255,255,255,0.08); padding: 0.1em 0.3em; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #a78bfa; }
+.ProseMirror pre code { background: none; padding: 0; color: inherit; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
