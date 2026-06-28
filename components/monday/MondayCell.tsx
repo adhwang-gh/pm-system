@@ -55,7 +55,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
   // Fetch members when person picker opens
   useEffect(() => {
     if (col.type === 'person' && editing) {
-      const h = userId ? { 'X-Pm-User-Id': userId } : {}
+      const h: Record<string, string> = userId ? { 'X-Pm-User-Id': userId } : {}
       fetch('/monday/api/members', { headers: h }).then(r => r.json()).then(setMembers).catch(() => {})
     }
   }, [col.type, editing])
@@ -116,7 +116,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
     const addMember = async () => {
       const name = addingName.trim()
       if (!name) return
-      const h = userId ? { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId } : { 'Content-Type': 'application/json' }
+      const h: Record<string, string> = { 'Content-Type': 'application/json', ...(userId ? { 'X-Pm-User-Id': userId } : {}) }
     const res = await fetch('/monday/api/members', { method: 'POST', headers: h, body: JSON.stringify({ name }) })
       const m = await res.json()
       setMembers(prev => [...prev, m])

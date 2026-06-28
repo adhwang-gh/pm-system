@@ -74,7 +74,7 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
       {!collapsed && items.map(item => (
         <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={group.color}
           selected={selectedIds.has(item.id)} onToggleSelect={() => onToggleSelect(item.id)}
-          onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} />
+          onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
       ))}
 
       {!collapsed && (
@@ -140,11 +140,12 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
   )
 }
 
-function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdateItem, onDelete }: {
+function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdateItem, onDelete, userId }: {
   item: MItem; columns: MColumn[]; groupColor: string; selected: boolean
   onToggleSelect: () => void
   onUpdateItem: (itemId: string, title?: string, data?: Record<string, string | number>) => void
   onDelete: () => void
+  userId?: string
 }) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -428,7 +429,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                 <ItemRow key={item.id} item={item} columns={visibleCols}
                   groupColor={groups.find(g => g.id === item.group_id)?.color ?? '#444'}
                   selected={selectedIds.has(item.id)} onToggleSelect={() => toggleSelect(item.id)}
-                  onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} />
+                  onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
               ))}
               {filtered.length === 0 && (
                 <tr><td colSpan={visibleCols.length + 3} style={{ textAlign: 'center', padding: '48px', fontSize: 13, color: MUTED }}>No items match your filters</td></tr>

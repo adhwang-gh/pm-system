@@ -291,7 +291,7 @@ export default function PMSystemPage() {
     }
   }, [])
 
-  const pmHeaders = userId ? { 'X-Pm-User-Id': userId } : {}
+  const pmHeaders: Record<string, string> = userId ? { 'X-Pm-User-Id': userId } : {}
 
   useEffect(() => {
     if (!userId) return

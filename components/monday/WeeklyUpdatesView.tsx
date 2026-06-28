@@ -133,7 +133,7 @@ export default function WeeklyUpdatesView({ userId }: { userId?: string }) {
     setMyMemberId(localStorage.getItem('pm_user_member_id') ?? '')
   }, [])
 
-  const pmHeaders = userId ? { 'X-Pm-User-Id': userId } : {}
+  const pmHeaders: Record<string, string> = userId ? { 'X-Pm-User-Id': userId } : {}
 
   const load = useCallback(() => {
     fetch('/monday/api/members', { headers: pmHeaders }).then(r => r.json()).then(setMembers)

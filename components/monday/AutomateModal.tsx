@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TEAM_MEMBERS } from './MondayCell'
 
 const GOLD = '#C9A24B'
 const BG = '#141414'
@@ -73,7 +72,7 @@ export default function AutomateModal({ boardId, onClose }: { boardId: string; o
 
   const buildName = () => {
     const tl = triggerType === 'item_created' ? 'When item created' : `When status → ${triggerValue || '?'}`
-    const al = actionType === 'assign_pm' ? `assign ${TEAM_MEMBERS.find(m => m.key === actionValue)?.name ?? actionValue}` : `set ${columns.find(c => c.id === actionColId)?.title ?? actionColId} = ${actionValue}`
+    const al = actionType === 'assign_pm' ? `assign ${actionValue}` : `set ${columns.find(c => c.id === actionColId)?.title ?? actionColId} = ${actionValue}`
     return `${tl}, ${al}`
   }
 
@@ -195,7 +194,7 @@ export default function AutomateModal({ boardId, onClose }: { boardId: string; o
                     </select>
                     <select value={actionValue} onChange={e => setActionValue(e.target.value)} style={{ ...selectStyle, flex: 1 }}>
                       <option value="">Pick person…</option>
-                      {TEAM_MEMBERS.map(m => <option key={m.key} value={m.key}>{m.name}</option>)}
+                      {/* Person options loaded dynamically — placeholder */}
                     </select>
                   </div>
                 )}
