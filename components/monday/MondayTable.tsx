@@ -168,7 +168,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
         )}
       </td>
       {columns.map(col => (
-        <td key={col.id} style={{ borderRight: `1px solid ${BORDER}`, padding: 0, width: col.width, minWidth: col.width, maxWidth: col.width, overflow: 'hidden' }}>
+        <td key={col.id} style={{ borderRight: `1px solid ${BORDER}`, padding: 0, width: col.width, minWidth: col.width, maxWidth: col.width, position: 'relative' }}>
           <MondayCell col={col} value={item.data[col.id]} onChange={v => onUpdateItem(item.id, undefined, { [col.id]: v })} />
         </td>
       ))}
