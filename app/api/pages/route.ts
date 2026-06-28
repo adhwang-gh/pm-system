@@ -1,21 +1,22 @@
 import { NextResponse } from 'next/server'
-import { getDb } from '@/lib/db'
+import { getTurso, toRows, initNotionSchema } from '@/lib/tursoClient'
 import { randomUUID } from 'crypto'
 
-export function GET() {
-  const db = getDb()
-  const pages = db.prepare('SELECT * FROM pages ORDER BY created_at ASC').all()
-  return NextResponse.json(pages)
+export async function GET() {
+  await initNotionSchema()
+  const turso = getTurso()
+  const res = await turso.execute('SELECT * FROM pages ORDER BY created_at ASC')
+  return NextResponse.json(toRows(res.rows))
 }
 
 export async function POST(req: Request) {
-  const db = getDb()
+  await initNotionSchema()
+  const turso = getTurso()
   const body = await req.json()
   const id = randomUUID()
   const { title = 'Untitled', parent_id = null, icon = '📄', is_database = 0 } = body
-  db.prepare(`INSERT INTO pages (id, title, parent_id, icon, is_database) VALUES (?, ?, ?, ?, ?)`).run(id, title, parent_id, icon, is_database)
+  await turso.execute({ sql: `INSERT INTO pages (id, title, parent_id, icon, is_database) VALUES (?, ?, ?, ?, ?)`, args: [id, title, parent_id, icon, is_database] })
 
-  // Auto-seed columns for new databases
   if (is_database === 1) {
     const cols = [
       { name: 'Task', type: 'text', options: '[]', pos: 0 },
@@ -24,10 +25,10 @@ export async function POST(req: Request) {
       { name: 'Due Date', type: 'date', options: '[]', pos: 3 },
     ]
     for (const col of cols) {
-      db.prepare('INSERT INTO db_columns (id, page_id, name, type, options, position) VALUES (?, ?, ?, ?, ?, ?)').run(randomUUID(), id, col.name, col.type, col.options, col.pos)
+      await turso.execute({ sql: 'INSERT INTO db_columns (id, page_id, name, type, options, position) VALUES (?, ?, ?, ?, ?, ?)', args: [randomUUID(), id, col.name, col.type, col.options, col.pos] })
     }
   }
 
-  const page = db.prepare('SELECT * FROM pages WHERE id = ?').get(id)
-  return NextResponse.json(page, { status: 201 })
+  const page = (await turso.execute({ sql: 'SELECT * FROM pages WHERE id = ?', args: [id] })).rows[0]
+  return NextResponse.json(Object.fromEntries(Object.entries(page)), { status: 201 })
 }
