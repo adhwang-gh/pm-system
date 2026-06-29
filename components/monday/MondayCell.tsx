@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { MColumn } from './types'
 
-const GOLD = '#C9A24B'
-const BG = '#141414'
-const SURFACE = '#1C1C1C'
-const BORDER = '#2A2A2A'
-const TEXT = '#EDE8DD'
-const MUTED = '#8A8478'
+const GOLD = '#3D5A80'
+const BG = '#FFFFFF'
+const SURFACE = '#F3F3F0'
+const BORDER = '#DDDDD8'
+const TEXT = '#1A1A18'
+const MUTED = '#9A9A92'
 
 export interface PMember {
   id: string
@@ -26,7 +26,7 @@ interface Props {
 
 function MemberAvatar({ member, size = 28 }: { member: PMember; size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 800, fontSize: size * 0.36, flexShrink: 0 }} title={member.name}>
+    <div style={{ width: size, height: size, borderRadius: '50%', background: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontWeight: 800, fontSize: size * 0.36, flexShrink: 0 }} title={member.name}>
       {member.initials}
     </div>
   )
@@ -63,13 +63,13 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
   const dropdownStyle: React.CSSProperties = {
     position: 'absolute', top: 38, left: 0, zIndex: 50,
     background: BG, border: `1px solid ${BORDER}`,
-    borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+    borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
     minWidth: 160,
   }
 
   /* ── Status ── */
   if (col.type === 'status') {
-    const color = str ? getStatusColor(col, str) : '#1A1A1A'
+    const color = str ? getStatusColor(col, str) : '#F5F5F2'
     const values = getStatusValues(col)
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -135,11 +135,11 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
               {selectedIds.slice(0, 3).map((id, i) => {
                 const m = members.find(t => t.id === id)
                 return m
-                  ? <div key={id} style={{ marginLeft: i > 0 ? -6 : 0, border: '1px solid #0A0A0A', borderRadius: '50%' }}><MemberAvatar member={m} size={26} /></div>
-                  : <div key={id} style={{ width: 26, height: 26, borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: TEXT, marginLeft: i > 0 ? -6 : 0, border: '1px solid #0A0A0A' }}>?</div>
+                  ? <div key={id} style={{ marginLeft: i > 0 ? -6 : 0, border: '1px solid #E8E8E4', borderRadius: '50%' }}><MemberAvatar member={m} size={26} /></div>
+                  : <div key={id} style={{ width: 26, height: 26, borderRadius: '50%', background: '#E8E8E4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: TEXT, marginLeft: i > 0 ? -6 : 0, border: '1px solid #E8E8E4' }}>?</div>
               })}
               {selectedIds.length > 3 && (
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: TEXT, marginLeft: -6, border: '1px solid #0A0A0A' }}>+{selectedIds.length - 3}</div>
+                <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#E8E8E4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: TEXT, marginLeft: -6, border: '1px solid #E8E8E4' }}>+{selectedIds.length - 3}</div>
               )}
             </div>
           )}
@@ -151,7 +151,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
             <div style={{ ...dropdownStyle, width: 240, overflow: 'hidden' }}>
               <div style={{ padding: 8, borderBottom: `1px solid ${BORDER}` }}>
                 <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search people…"
-                  style={{ width: '100%', background: '#0D0D0D', border: `1px solid ${BORDER}`, borderRadius: 7, padding: '5px 10px', fontSize: 12, color: TEXT, outline: 'none', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', background: '#FAFAF8', border: `1px solid ${BORDER}`, borderRadius: 7, padding: '5px 10px', fontSize: 12, color: TEXT, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div style={{ maxHeight: 200, overflowY: 'auto', padding: '4px 0' }}>
                 {filtered.length === 0 && !showAddInput && (
@@ -179,8 +179,8 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
                     <input autoFocus value={addingName} onChange={e => setAddingName(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') addMember(); if (e.key === 'Escape') { setShowAddInput(false); setAddingName('') } }}
                       placeholder="Full name…"
-                      style={{ flex: 1, background: '#0D0D0D', border: `1px solid ${GOLD}55`, borderRadius: 6, padding: '4px 8px', fontSize: 12, color: TEXT, outline: 'none' }} />
-                    <button onClick={addMember} style={{ fontSize: 11, background: GOLD, color: '#000', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontWeight: 700 }}>Add</button>
+                      style={{ flex: 1, background: '#FAFAF8', border: `1px solid ${GOLD}55`, borderRadius: 10, padding: '4px 8px', fontSize: 12, color: TEXT, outline: 'none' }} />
+                    <button onClick={addMember} style={{ fontSize: 11, background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '4px 8px', cursor: 'pointer', fontWeight: 700 }}>Add</button>
                   </div>
                 ) : (
                   <button onClick={() => setShowAddInput(true)}
@@ -214,22 +214,22 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 6px', overflow: 'hidden' }}>
         {str ? (
           <button onClick={() => setEditing(true)}
-            style={{ fontSize: 10, fontWeight: 500, color: TEXT, background: '#1C1C1C', border: `1px solid ${BORDER}`, borderRadius: 4, padding: '3px 8px', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+            style={{ fontSize: 10, fontWeight: 500, color: TEXT, background: '#F3F3F0', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '3px 8px', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
             {label}
           </button>
         ) : (
           <button onClick={() => setEditing(true)} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Set dates</button>
         )}
         {editing && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }} onClick={() => setEditing(false)}>
-            <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20, width: 240, boxShadow: '0 8px 32px rgba(0,0,0,0.8)' }} onClick={e => e.stopPropagation()}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F0F0', marginBottom: 14 }}>Timeline</div>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }} onClick={() => setEditing(false)}>
+            <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20, width: 240, boxShadow: '0 8px 32px rgba(0,0,0,0.10)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A18', marginBottom: 14 }}>Timeline</div>
               <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Start date</label>
               <input type="date" defaultValue={start} id="tl-start"
-                style={{ width: '100%', background: '#0D0D0D', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 10px', fontSize: 12, color: TEXT, outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
+                style={{ width: '100%', background: '#FAFAF8', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '6px 10px', fontSize: 12, color: TEXT, outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
               <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>End date</label>
               <input type="date" defaultValue={end} id="tl-end"
-                style={{ width: '100%', background: '#0D0D0D', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 10px', fontSize: 12, color: TEXT, outline: 'none', marginBottom: 14, boxSizing: 'border-box' }} />
+                style={{ width: '100%', background: '#FAFAF8', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '6px 10px', fontSize: 12, color: TEXT, outline: 'none', marginBottom: 14, boxSizing: 'border-box' }} />
               <button
                 onClick={() => {
                   const s = (document.getElementById('tl-start') as HTMLInputElement)?.value
@@ -237,7 +237,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
                   if (s && e) onChange(`${s}|${e}`)
                   setEditing(false)
                 }}
-                style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                style={{ width: '100%', background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                 Save
               </button>
             </div>

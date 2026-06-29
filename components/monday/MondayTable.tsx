@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { MColumn, MGroup, MItem } from './types'
 import MondayCell from './MondayCell'
 
-const GOLD = '#C9A24B'
-const BG = '#0B0B0B'
-const SURFACE = '#141414'
-const BORDER = '#1E1E1E'
-const TEXT = '#EDE8DD'
-const MUTED = '#8A8478'
+const GOLD = '#3D5A80'
+const BG = '#F7F7F5'
+const SURFACE = '#FFFFFF'
+const BORDER = '#E8E8E4'
+const TEXT = '#1A1A18'
+const MUTED = '#9A9A92'
 
 interface Props {
   boardId: string
@@ -49,13 +49,13 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${group.color}` }}>
             <button onClick={toggle} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, width: 14 }}>{collapsed ? '▸' : '▾'}</button>
             <span style={{ fontWeight: 700, fontSize: 12, color: group.color, letterSpacing: '0.02em' }}>{group.title}</span>
-            <span style={{ fontSize: 10, color: MUTED, background: '#1C1C1C', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
+            <span style={{ fontSize: 10, color: MUTED, background: '#F3F3F0', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
           </div>
         </td>
       </tr>
 
       {!collapsed && (
-        <tr style={{ background: '#141414' }}>
+        <tr style={{ background: '#FFFFFF' }}>
           <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${group.color}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
               <input type="checkbox" checked={allSelected} onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }} />
@@ -63,11 +63,11 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
           </td>
           <th style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '8px 12px', minWidth: 280, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'IBM Plex Mono', monospace" }}>Project</th>
           {visibleCols.map(col => (
-            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#141414', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: "'IBM Plex Mono', monospace" }}>
+            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#FFFFFF', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: "'IBM Plex Mono', monospace" }}>
               <div style={{ padding: '8px 8px' }}>{col.title}</div>
             </th>
           ))}
-          <th style={{ borderBottom: `1px solid ${BORDER}`, width: 32, background: '#141414' }} />
+          <th style={{ borderBottom: `1px solid ${BORDER}`, width: 32, background: '#FFFFFF' }} />
         </tr>
       )}
 
@@ -86,8 +86,8 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
                 <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') confirmAdd(); if (e.key === 'Escape') { setAddingItem(false); setNewTitle('') } }}
                   onBlur={confirmAdd} placeholder="Item name…"
-                  style={{ fontSize: 13, border: `1px solid ${GOLD}`, borderRadius: 6, padding: '4px 8px', outline: 'none', flex: 1, maxWidth: 280, background: '#1C1C1C', color: TEXT }} />
-                <button onClick={confirmAdd} style={{ fontSize: 11, background: GOLD, color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>Add</button>
+                  style={{ fontSize: 13, border: `1px solid ${GOLD}`, borderRadius: 10, padding: '4px 8px', outline: 'none', flex: 1, maxWidth: 280, background: '#F3F3F0', color: TEXT }} />
+                <button onClick={confirmAdd} style={{ fontSize: 11, background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>Add</button>
                 <button onClick={() => setAddingItem(false)} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
               </div>
             ) : (
@@ -100,7 +100,7 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
       )}
 
       {!collapsed && (
-        <tr style={{ background: '#0D0D0D' }}>
+        <tr style={{ background: '#FAFAF8' }}>
           <td style={{ borderLeft: `3px solid ${group.color}`, borderBottom: `1px solid ${BORDER}`, width: 32 }} />
           <td style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, padding: '6px 12px' }}>
             <div style={{ display: 'flex', gap: 2, height: 16 }}>
@@ -151,7 +151,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
   const [hovered, setHovered] = useState(false)
   return (
     <tr onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ borderBottom: `1px solid ${BORDER}`, background: selected ? `${GOLD}0D` : hovered ? '#141414' : 'transparent', transition: 'background 0.1s' }}>
+      style={{ borderBottom: `1px solid ${BORDER}`, background: selected ? `${GOLD}0D` : hovered ? '#FFFFFF' : 'transparent', transition: 'background 0.1s' }}>
       <td style={{ width: 32, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${groupColor}` }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
           <input type="checkbox" checked={selected} onChange={onToggleSelect} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer', opacity: selected || hovered ? 1 : 0, transition: 'opacity 0.15s' }} />
@@ -162,11 +162,11 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
           <input autoFocus defaultValue={item.title}
             onBlur={e => { onUpdateItem(item.id, e.target.value); setEditingTitle(false) }}
             onKeyDown={e => { if (e.key === 'Enter') { onUpdateItem(item.id, e.currentTarget.value); setEditingTitle(false) } if (e.key === 'Escape') setEditingTitle(false) }}
-            style={{ width: '100%', padding: '8px 12px', fontSize: 13, outline: 'none', border: `1px solid ${GOLD}`, borderRadius: 6, background: '#1C1C1C', color: TEXT }} />
+            style={{ width: '100%', padding: '8px 12px', fontSize: 13, outline: 'none', border: `1px solid ${GOLD}`, borderRadius: 10, background: '#F3F3F0', color: TEXT }} />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }} onClick={() => setEditingTitle(true)}>
             <span style={{ fontSize: 13, color: TEXT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title || 'Untitled'}</span>
-            {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} style={{ color: '#444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
+            {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
           </div>
         )}
       </td>
@@ -231,12 +231,12 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
 
   const toolBtn = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', fontSize: 12,
-    borderRadius: 7, cursor: 'pointer', border: `1px solid ${active ? GOLD + '55' : '#2A2A2A'}`,
+    borderRadius: 7, cursor: 'pointer', border: `1px solid ${active ? GOLD + '55' : '#DDDDD8'}`,
     background: active ? `${GOLD}10` : 'transparent', color: active ? GOLD : '#555', transition: 'all 0.15s',
   })
 
   const dropdownStyle: React.CSSProperties = {
-    position: 'absolute', top: 36, left: 0, zIndex: 50, background: '#111', border: `1px solid #2A2A2A`,
+    position: 'absolute', top: 36, left: 0, zIndex: 50, background: '#FFFFFF', border: `1px solid #DDDDD8`,
     borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', width: 200, padding: '6px 0',
   }
 
@@ -250,49 +250,49 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 24px', background: GOLD, flexShrink: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#000' }}>{selectedIds.size} item{selectedIds.size > 1 ? 's' : ''} selected</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF' }}>{selectedIds.size} item{selectedIds.size > 1 ? 's' : ''} selected</span>
           <div style={{ flex: 1 }} />
-          <button onClick={bulkDelete} style={{ fontSize: 12, color: '#000', background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 7, padding: '4px 12px', cursor: 'pointer', fontWeight: 600 }}>Delete</button>
-          <button onClick={() => setSelectedIds(new Set())} style={{ fontSize: 12, color: '#000', background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: 7, padding: '4px 12px', cursor: 'pointer' }}>Deselect</button>
+          <button onClick={bulkDelete} style={{ fontSize: 12, color: '#FFFFFF', background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 7, padding: '4px 12px', cursor: 'pointer', fontWeight: 600 }}>Delete</button>
+          <button onClick={() => setSelectedIds(new Set())} style={{ fontSize: 12, color: '#FFFFFF', background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: 7, padding: '4px 12px', cursor: 'pointer' }}>Deselect</button>
         </div>
       )}
 
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderBottom: `1px solid ${BORDER}`, background: SURFACE, flexShrink: 0, flexWrap: 'wrap' }}>
         <button onClick={() => onAddItem(groups[0]?.id ?? '', 'New project')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: GOLD, color: '#000', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
           + New project
         </button>
 
-        <div style={{ width: 1, height: 18, background: '#2A2A2A', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 18, background: '#DDDDD8', margin: '0 4px' }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#1C1C1C', border: '1px solid #2A2A2A', borderRadius: 7, padding: '5px 10px' }}>
-          <span style={{ color: '#444', fontSize: 12 }}>⊕</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F3F3F0', border: '1px solid #DDDDD8', borderRadius: 7, padding: '5px 10px' }}>
+          <span style={{ color: '#6B7280', fontSize: 12 }}>⊕</span>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search"
             style={{ background: 'transparent', fontSize: 12, color: TEXT, outline: 'none', width: 100, border: 'none' }} />
-          {search && <button onClick={() => setSearch('')} style={{ color: '#444', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>✕</button>}
+          {search && <button onClick={() => setSearch('')} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>✕</button>}
         </div>
 
         {/* Filter */}
         <div style={{ position: 'relative' }}>
           <button style={toolBtn(showFilter || filterStatus.length > 0)} onClick={() => { setShowFilter(v => !v); setShowSort(false); setShowHide(false) }}>
-            Filter {filterStatus.length > 0 && <span style={{ background: GOLD, color: '#000', fontSize: 9, borderRadius: 99, width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{filterStatus.length}</span>}
+            Filter {filterStatus.length > 0 && <span style={{ background: GOLD, color: '#FFFFFF', fontSize: 9, borderRadius: 99, width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{filterStatus.length}</span>}
           </button>
           {showFilter && (
             <div style={dropdownStyle}>
-              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #1E1E1E`, marginBottom: 4 }}>Filter by status</div>
+              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #E8E8E4`, marginBottom: 4 }}>Filter by status</div>
               {allStatusValues.length === 0 ? (
-                <div style={{ padding: '8px 14px', fontSize: 12, color: '#444' }}>No status values found</div>
+                <div style={{ padding: '8px 14px', fontSize: 12, color: '#6B7280' }}>No status values found</div>
               ) : allStatusValues.map(val => (
                 <button key={val} onClick={() => toggleFilterStatus(val)} style={dropdownItem(filterStatus.includes(val))}>
                   <div style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${filterStatus.includes(val) ? GOLD : '#333'}`, background: filterStatus.includes(val) ? GOLD : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {filterStatus.includes(val) && <span style={{ color: '#000', fontSize: 8, fontWeight: 900 }}>✓</span>}
+                    {filterStatus.includes(val) && <span style={{ color: '#FFFFFF', fontSize: 8, fontWeight: 900 }}>✓</span>}
                   </div>
                   {val}
                 </button>
               ))}
               {filterStatus.length > 0 && (
-                <button onClick={() => setFilterStatus([])} style={{ ...dropdownItem(), color: '#c0392b', borderTop: `1px solid #1E1E1E`, marginTop: 4 }}>Clear filters</button>
+                <button onClick={() => setFilterStatus([])} style={{ ...dropdownItem(), color: '#c0392b', borderTop: `1px solid #E8E8E4`, marginTop: 4 }}>Clear filters</button>
               )}
             </div>
           )}
@@ -305,7 +305,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
           </button>
           {showSort && (
             <div style={dropdownStyle}>
-              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #1E1E1E`, marginBottom: 4 }}>Sort by</div>
+              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #E8E8E4`, marginBottom: 4 }}>Sort by</div>
               <button onClick={() => { setSortColId(null); setSortDir('asc'); setShowSort(false) }} style={dropdownItem(!sortColId)}>None</button>
               <button onClick={() => { setSortColId('title'); setSortDir(sortColId === 'title' && sortDir === 'asc' ? 'desc' : 'asc'); setShowSort(false) }} style={dropdownItem(sortColId === 'title')}>
                 Project name {sortColId === 'title' && <span>{sortDir === 'asc' ? 'A→Z' : 'Z→A'}</span>}
@@ -322,20 +322,20 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
         {/* Hide */}
         <div style={{ position: 'relative' }}>
           <button style={toolBtn(showHide || hiddenCols.size > 0)} onClick={() => { setShowHide(v => !v); setShowFilter(false); setShowSort(false) }}>
-            Hide {hiddenCols.size > 0 && <span style={{ background: GOLD, color: '#000', fontSize: 9, borderRadius: 99, width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{hiddenCols.size}</span>}
+            Hide {hiddenCols.size > 0 && <span style={{ background: GOLD, color: '#FFFFFF', fontSize: 9, borderRadius: 99, width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{hiddenCols.size}</span>}
           </button>
           {showHide && (
             <div style={dropdownStyle}>
-              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #1E1E1E`, marginBottom: 4 }}>Columns</div>
+              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #E8E8E4`, marginBottom: 4 }}>Columns</div>
               {columns.map(col => (
                 <button key={col.id} onClick={() => setHiddenCols(prev => { const n = new Set(prev); n.has(col.id) ? n.delete(col.id) : n.add(col.id); return n })} style={dropdownItem(!hiddenCols.has(col.id))}>
                   <div style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${!hiddenCols.has(col.id) ? GOLD : '#333'}`, background: !hiddenCols.has(col.id) ? GOLD : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {!hiddenCols.has(col.id) && <span style={{ color: '#000', fontSize: 8, fontWeight: 900 }}>✓</span>}
+                    {!hiddenCols.has(col.id) && <span style={{ color: '#FFFFFF', fontSize: 8, fontWeight: 900 }}>✓</span>}
                   </div>
                   {col.title}
                 </button>
               ))}
-              {hiddenCols.size > 0 && <button onClick={() => setHiddenCols(new Set())} style={{ ...dropdownItem(true), borderTop: `1px solid #1E1E1E`, marginTop: 4 }}>Show all</button>}
+              {hiddenCols.size > 0 && <button onClick={() => setHiddenCols(new Set())} style={{ ...dropdownItem(true), borderTop: `1px solid #E8E8E4`, marginTop: 4 }}>Show all</button>}
             </div>
           )}
         </div>
@@ -360,11 +360,11 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
       <div style={{ flex: 1, overflow: 'auto', background: BG }}>
         {groups.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', padding: '64px 32px' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#444', marginBottom: 8 }}>This workspace is empty</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#6B7280', marginBottom: 8 }}>This workspace is empty</h3>
             <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Add a project or create a group to get started</p>
             <div style={{ display: 'flex', gap: 12 }}>
-              <button onClick={() => onAddItem('', 'New project')} style={{ padding: '8px 16px', background: GOLD, color: '#000', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New project</button>
-              <button onClick={() => onAddGroup('Group 1')} style={{ padding: '8px 16px', background: 'transparent', color: '#666', border: '1px solid #2A2A2A', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>+ Add group</button>
+              <button onClick={() => onAddItem('', 'New project')} style={{ padding: '8px 16px', background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New project</button>
+              <button onClick={() => onAddGroup('Group 1')} style={{ padding: '8px 16px', background: 'transparent', color: '#6B7280', border: '1px solid #DDDDD8', borderRadius: 10, fontSize: 13, cursor: 'pointer' }}>+ Add group</button>
             </div>
           </div>
         ) : groupMode === 'group' ? (
@@ -388,8 +388,8 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                       <input autoFocus value={newGroupTitle} onChange={e => setNewGroupTitle(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') confirmAddGroup(); if (e.key === 'Escape') { setAddingGroup(false); setNewGroupTitle('') } }}
                         placeholder="Group name…"
-                        style={{ fontSize: 13, border: `1px solid ${GOLD}`, borderRadius: 6, padding: '4px 8px', outline: 'none', maxWidth: 240, background: '#1C1C1C', color: TEXT }} />
-                      <button onClick={confirmAddGroup} style={{ fontSize: 11, background: GOLD, color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>Create</button>
+                        style={{ fontSize: 13, border: `1px solid ${GOLD}`, borderRadius: 10, padding: '4px 8px', outline: 'none', maxWidth: 240, background: '#F3F3F0', color: TEXT }} />
+                      <button onClick={confirmAddGroup} style={{ fontSize: 11, background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>Create</button>
                       <button onClick={() => { setAddingGroup(false); setNewGroupTitle('') }} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
                     </div>
                   ) : (
@@ -404,7 +404,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <thead>
-              <tr style={{ background: '#141414' }}>
+              <tr style={{ background: '#FFFFFF' }}>
                 <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
                     <input type="checkbox" style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }}

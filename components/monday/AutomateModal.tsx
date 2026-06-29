@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 
-const GOLD = '#C9A24B'
-const BG = '#141414'
-const SURFACE = '#1C1C1C'
-const BORDER = '#2A2A2A'
-const TEXT = '#EDE8DD'
-const MUTED = '#8A8478'
+const GOLD = '#3D5A80'
+const BG = '#FFFFFF'
+const SURFACE = '#F3F3F0'
+const BORDER = '#DDDDD8'
+const TEXT = '#1A1A18'
+const MUTED = '#9A9A92'
 
 interface Automation {
   id: string; board_id: string; name: string; trigger_type: string
@@ -27,7 +27,7 @@ function formatRunTime(lastRun: string | null) {
   return new Date(lastRun + 'Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-const selectStyle: React.CSSProperties = { width: '100%', background: '#0D0D0D', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '7px 10px', color: TEXT, fontSize: 12, outline: 'none', boxSizing: 'border-box' }
+const selectStyle: React.CSSProperties = { width: '100%', background: '#FAFAF8', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 10px', color: TEXT, fontSize: 12, outline: 'none', boxSizing: 'border-box' }
 const inputStyle: React.CSSProperties = { ...selectStyle, fontFamily: 'inherit' }
 const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5, display: 'block' }
 
@@ -96,12 +96,12 @@ export default function AutomateModal({ boardId, onClose }: { boardId: string; o
   const getValueOptions = (col: Column | undefined) => { if (!col) return []; if (col.type === 'status') return STATUS_OPTIONS; if (col.type === 'priority') return PRIORITY_OPTIONS; return [] }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }} onClick={onClose}>
-      <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.8)', width: 580, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)' }} onClick={onClose}>
+      <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 18, boxShadow: '0 24px 64px rgba(0,0,0,0.10)', width: 580, maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: `1px solid ${BORDER}` }}>
           <div>
-            <div style={{ color: '#F0F0F0', fontWeight: 700, fontSize: 16 }}>Automations</div>
+            <div style={{ color: '#1A1A18', fontWeight: 700, fontSize: 16 }}>Automations</div>
             <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>Rules that run automatically when conditions are met</div>
           </div>
           <button onClick={onClose} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>✕</button>
@@ -112,13 +112,13 @@ export default function AutomateModal({ boardId, onClose }: { boardId: string; o
           {automations.length === 0 && !adding && (
             <div style={{ textAlign: 'center', padding: '48px 0', color: MUTED }}>
               <div style={{ fontSize: 32, marginBottom: 10 }}>⚡</div>
-              <p style={{ fontWeight: 600, color: '#444', margin: 0 }}>No automations yet</p>
+              <p style={{ fontWeight: 600, color: '#6B7280', margin: 0 }}>No automations yet</p>
               <p style={{ fontSize: 12, marginTop: 4 }}>Add one below to get started</p>
             </div>
           )}
 
           {automations.map(autom => (
-            <div key={autom.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, border: `1px solid ${autom.active ? BORDER : '#1A1A1A'}`, borderRadius: 12, background: SURFACE, opacity: autom.active ? 1 : 0.55, transition: 'all 0.15s' }}>
+            <div key={autom.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, border: `1px solid ${autom.active ? BORDER : '#F5F5F2'}`, borderRadius: 14, background: SURFACE, opacity: autom.active ? 1 : 0.55, transition: 'all 0.15s' }}>
               {/* Toggle */}
               <button onClick={() => toggle(autom)} style={{ marginTop: 2, flexShrink: 0, width: 36, height: 20, borderRadius: 99, background: autom.active ? GOLD : '#333', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}>
                 <div style={{ position: 'absolute', top: 2, width: 16, height: 16, background: '#fff', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.4)', transition: 'transform 0.2s', transform: autom.active ? 'translateX(18px)' : 'translateX(2px)' }} />
@@ -127,13 +127,13 @@ export default function AutomateModal({ boardId, onClose }: { boardId: string; o
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: TEXT, lineHeight: 1.4 }}>{autom.name}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, color: '#444' }}>Ran {autom.run_count} time{autom.run_count !== 1 ? 's' : ''}</span>
-                  {autom.last_run && <span style={{ fontSize: 11, color: '#444' }}>Last: {formatRunTime(autom.last_run)}</span>}
+                  <span style={{ fontSize: 11, color: '#6B7280' }}>Ran {autom.run_count} time{autom.run_count !== 1 ? 's' : ''}</span>
+                  {autom.last_run && <span style={{ fontSize: 11, color: '#6B7280' }}>Last: {formatRunTime(autom.last_run)}</span>}
                   <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 99, fontWeight: 800, textTransform: 'uppercase', background: autom.active ? `${GOLD}20` : '#222', color: autom.active ? GOLD : '#444', letterSpacing: '0.05em' }}>{autom.active ? 'Active' : 'Paused'}</span>
                 </div>
               </div>
 
-              <button onClick={() => deleteAutom(autom.id)} style={{ color: '#333', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, flexShrink: 0, marginTop: 2 }}>✕</button>
+              <button onClick={() => deleteAutom(autom.id)} style={{ color: '#374151', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, flexShrink: 0, marginTop: 2 }}>✕</button>
             </div>
           ))}
 
@@ -201,8 +201,8 @@ export default function AutomateModal({ boardId, onClose }: { boardId: string; o
               </div>
 
               <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
-                <button onClick={() => { setAdding(false); resetForm() }} style={{ padding: '8px 16px', border: `1px solid ${BORDER}`, color: MUTED, background: 'transparent', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
-                <button onClick={save} disabled={saving || !canSave} style={{ flex: 1, padding: '8px 0', background: canSave ? GOLD : '#333', color: canSave ? '#000' : '#555', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: canSave ? 'pointer' : 'default', transition: 'all 0.15s' }}>
+                <button onClick={() => { setAdding(false); resetForm() }} style={{ padding: '8px 16px', border: `1px solid ${BORDER}`, color: MUTED, background: 'transparent', borderRadius: 10, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={save} disabled={saving || !canSave} style={{ flex: 1, padding: '8px 0', background: canSave ? GOLD : '#333', color: canSave ? '#000' : '#555', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: canSave ? 'pointer' : 'default', transition: 'all 0.15s' }}>
                   {saving ? 'Saving…' : 'Create Automation'}
                 </button>
               </div>

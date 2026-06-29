@@ -29,9 +29,9 @@ export default function MondayLayout({ children }: { children: React.ReactNode }
         /* Webkit scrollbar stays minimal */
         .stele-root ::-webkit-scrollbar { width: 4px; height: 4px; }
         .stele-root ::-webkit-scrollbar-track { background: transparent; }
-        .stele-root ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+        .stele-root ::-webkit-scrollbar-thumb { background: #DDDDD8; border-radius: 2px; }
       `}</style>
-      <div className="stele-root h-full flex flex-col" style={{ background: '#0B0B0B' }}>
+      <div className="stele-root h-full flex flex-col" style={{ background: '#F7F7F5' }}>
         {children}
       </div>
     </>

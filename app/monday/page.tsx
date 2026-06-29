@@ -9,7 +9,7 @@ import IntegrateModal from '@/components/monday/IntegrateModal'
 import AutomateModal from '@/components/monday/AutomateModal'
 import WeeklyUpdatesView from '@/components/monday/WeeklyUpdatesView'
 
-const GOLD = '#C9A24B'
+const GOLD = '#3D5A80'
 
 interface BoardData { board: MBoard; groups: MGroup[]; columns: MColumn[]; items: MItem[] }
 
@@ -21,9 +21,9 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const send = () => { if (!email.trim()) return; setSent(true); setTimeout(onClose, 1500) }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="rounded-2xl shadow-2xl w-[440px] p-6" style={{ background: '#111', border: '1px solid #2A2A2A' }} onClick={e => e.stopPropagation()}>
-        <h2 className="text-lg font-bold mb-1" style={{ color: '#F0F0F0' }}>Invite to workspace</h2>
-        <p className="text-sm mb-5" style={{ color: '#555' }}>Team members can access all boards in this workspace.</p>
+      <div className="rounded-2xl shadow-2xl w-[440px] p-6" style={{ background: '#FFFFFF', border: '1px solid #DDDDD8' }} onClick={e => e.stopPropagation()}>
+        <h2 className="text-lg font-bold mb-1" style={{ color: '#1A1A18' }}>Invite to workspace</h2>
+        <p className="text-sm mb-5" style={{ color: '#6B7280' }}>Team members can access all boards in this workspace.</p>
         {sent ? (
           <div className="text-center py-4"><div className="text-3xl mb-2">✅</div><p className="font-medium" style={{ color: GOLD }}>Invitation sent!</p></div>
         ) : (
@@ -31,15 +31,15 @@ function InviteModal({ onClose }: { onClose: () => void }) {
             <div className="space-y-3">
               <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }}
                 placeholder="Enter email address" type="email"
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={{ background: '#1A1A1A', border: '1px solid #2A2A2A', color: '#E0E0E0' }} />
+                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={{ background: '#F5F5F2', border: '1px solid #DDDDD8', color: '#1A1A18' }} />
               <select value={role} onChange={e => setRole(e.target.value)}
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={{ background: '#1A1A1A', border: '1px solid #2A2A2A', color: '#E0E0E0' }}>
+                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={{ background: '#F5F5F2', border: '1px solid #DDDDD8', color: '#1A1A18' }}>
                 <option>Admin</option><option>Editor</option><option>Viewer</option>
               </select>
             </div>
             <div className="flex gap-3 mt-5">
-              <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm" style={{ border: '1px solid #2A2A2A', color: '#666', background: 'transparent' }}>Cancel</button>
-              <button onClick={send} disabled={!email.trim()} className="flex-1 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-40" style={{ background: GOLD, color: '#000', border: 'none' }}>Send invite</button>
+              <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm" style={{ border: '1px solid #DDDDD8', color: '#6B7280', background: 'transparent' }}>Cancel</button>
+              <button onClick={send} disabled={!email.trim()} className="flex-1 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-40" style={{ background: GOLD, color: '#FFFFFF', border: 'none' }}>Send invite</button>
             </div>
           </>
         )}
@@ -53,9 +53,9 @@ function InviteModal({ onClose }: { onClose: () => void }) {
 function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }: { boards: MBoard[]; allBoardData: Record<string, BoardData>; onSelectBoard: (id: string) => void; userName: string | null; memberCount: number }) {
   const totalItems = Object.values(allBoardData).reduce((s, d) => s + d.items.length, 0)
   return (
-    <div className="flex-1 overflow-y-auto px-8 py-8" style={{ background: '#0B0B0B' }}>
-      <h1 className="text-2xl font-bold mb-1" style={{ color: '#F0F0F0' }}>Welcome back{userName ? `, ${userName}` : ''}</h1>
-      <p className="text-sm mb-8" style={{ color: '#444' }}>Here&apos;s what&apos;s happening across your workspace</p>
+    <div className="flex-1 overflow-y-auto px-8 py-8" style={{ background: '#F7F7F5' }}>
+      <h1 className="text-2xl font-bold mb-1" style={{ color: '#1A1A18' }}>Welcome back{userName ? `, ${userName}` : ''}</h1>
+      <p className="text-sm mb-8" style={{ color: '#6B7280' }}>Here&apos;s what&apos;s happening across your workspace</p>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
@@ -63,16 +63,16 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
           { label: 'Total items', value: totalItems },
           { label: 'Team members', value: memberCount },
         ].map(s => (
-          <div key={s.label} className="rounded-xl p-5 flex items-center gap-4" style={{ background: '#141414', border: '1px solid #1E1E1E' }}>
+          <div key={s.label} className="rounded-xl p-5 flex items-center gap-4" style={{ background: '#FFFFFF', border: '1px solid #E8E8E4' }}>
             <div>
               <div className="text-2xl font-bold" style={{ color: GOLD }}>{s.value}</div>
-              <div className="text-xs" style={{ color: '#444' }}>{s.label}</div>
+              <div className="text-xs" style={{ color: '#6B7280' }}>{s.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      <h2 className="text-xs font-bold mb-3 uppercase tracking-widest" style={{ color: '#333' }}>Workspaces</h2>
+      <h2 className="text-xs font-bold mb-3 uppercase tracking-widest" style={{ color: '#374151' }}>Workspaces</h2>
       <div className="grid grid-cols-2 gap-4">
         {boards.map(b => {
           const data = allBoardData[b.id]
@@ -80,11 +80,11 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
           return (
             <button key={b.id} onClick={() => onSelectBoard(b.id)}
               className="rounded-xl p-5 text-left transition-all group"
-              style={{ background: '#141414', border: '1px solid #1E1E1E' }}>
+              style={{ background: '#FFFFFF', border: '1px solid #E8E8E4' }}>
               <div className="flex items-center gap-3 mb-3">
                 <div>
                   <div className="font-semibold text-sm" style={{ color: '#D0D0D0' }}>{b.title}</div>
-                  <div className="text-xs" style={{ color: '#3A3A3A' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
+                  <div className="text-xs" style={{ color: '#D0D0CC' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
                 </div>
                 <span className="ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: GOLD }}>Open →</span>
               </div>
@@ -122,36 +122,36 @@ function MyWorkView({ allBoardData, myMemberId }: { allBoardData: Record<string,
     })
   })
 
-  const BORDER = '#1E1E1E'
-  const MUTED = '#8A8478'
+  const BORDER = '#E8E8E4'
+  const MUTED = '#9A9A92'
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px', background: '#0B0B0B' }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px', background: '#F7F7F5' }}>
       <div style={{ marginBottom: 32 }}>
-        <div style={{ fontSize: 22, fontWeight: 600, color: '#EDE8DD', marginBottom: 4 }}>My Work</div>
+        <div style={{ fontSize: 22, fontWeight: 600, color: '#1A1A18', marginBottom: 4 }}>My Work</div>
         <div style={{ fontSize: 11, color: MUTED }}>{myItems.length} item{myItems.length !== 1 ? 's' : ''} assigned to you across all boards</div>
       </div>
 
       {myItems.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '64px 0', color: '#3A3A3A' }}>
+        <div style={{ textAlign: 'center', padding: '64px 0', color: '#D0D0CC' }}>
           <div style={{ fontSize: 28, marginBottom: 12 }}>◈</div>
           <p style={{ margin: 0 }}>No items assigned to you yet</p>
         </div>
       ) : (
-        <div style={{ border: `1px solid ${BORDER}`, borderRadius: 8, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px 160px', padding: '10px 20px', background: '#141414', borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px 160px', padding: '10px 20px', background: '#FFFFFF', borderBottom: `1px solid ${BORDER}` }}>
             {['Item', 'Board', 'Status'].map(h => (
-              <div key={h} style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#3A3A3A' }}>{h}</div>
+              <div key={h} style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#D0D0CC' }}>{h}</div>
             ))}
           </div>
           {myItems.map(item => {
             const data = Object.values(allBoardData).find(d => d.board.id === item.boardId)
             const statusCol = data?.columns.find(c => c.type === 'status' && c.title === 'Project status')
             const status = statusCol ? String(item.data[statusCol.id] ?? '') : ''
-            const statusColor = statusCol ? (statusCol.options as { colors?: Record<string, string> })?.colors?.[status] ?? '#52504C' : '#52504C'
+            const statusColor = statusCol ? (statusCol.options as { colors?: Record<string, string> })?.colors?.[status] ?? '#6B7280' : '#6B7280'
             return (
-              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 200px 160px', padding: '12px 20px', borderBottom: `1px solid #161616`, background: 'transparent' }}>
-                <div style={{ fontSize: 12, color: '#EDE8DD', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 16 }}>{item.title || 'Untitled'}</div>
+              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 200px 160px', padding: '12px 20px', borderBottom: `1px solid #EBEBEA`, background: 'transparent' }}>
+                <div style={{ fontSize: 12, color: '#1A1A18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 16 }}>{item.title || 'Untitled'}</div>
                 <div style={{ fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.boardTitle}</div>
                 <div>
                   {status && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 3, backgroundColor: statusColor, color: '#fff', letterSpacing: '0.04em' }}>{status}</span>}
@@ -177,31 +177,31 @@ function InboxView() {
   const markRead = (id: string) => setItems(prev => prev.map(i => i.id === id ? { ...i, read: true } : i))
   const markAllRead = () => setItems(prev => prev.map(i => ({ ...i, read: true })))
   const unread = items.filter(i => !i.read).length
-  const BORDER = '#1E1E1E'
-  const MUTED = '#8A8478'
+  const BORDER = '#E8E8E4'
+  const MUTED = '#9A9A92'
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px', background: '#0B0B0B' }}>
+    <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px', background: '#F7F7F5' }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 600, color: '#EDE8DD', marginBottom: 4 }}>Inbox</div>
+          <div style={{ fontSize: 22, fontWeight: 600, color: '#1A1A18', marginBottom: 4 }}>Inbox</div>
           <div style={{ fontSize: 11, color: MUTED }}>{unread} unread notification{unread !== 1 ? 's' : ''}</div>
         </div>
         {unread > 0 && (
-          <button onClick={markAllRead} style={{ fontSize: 11, color: GOLD, background: 'none', border: `1px solid ${GOLD}44`, borderRadius: 4, padding: '5px 12px', cursor: 'pointer', letterSpacing: '0.06em' }}>
+          <button onClick={markAllRead} style={{ fontSize: 11, color: GOLD, background: 'none', border: `1px solid ${GOLD}44`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', letterSpacing: '0.06em' }}>
             Mark all read
           </button>
         )}
       </div>
-      <div style={{ border: `1px solid ${BORDER}`, borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
         {items.map(item => (
           <div key={item.id} onClick={() => markRead(item.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: `1px solid #161616`, background: !item.read ? '#141414' : 'transparent', cursor: 'pointer' }}>
-            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', color: item.read ? '#3A3A3A' : GOLD, background: item.read ? '#1C1C1C' : `${GOLD}18`, padding: '2px 6px', borderRadius: 3, flexShrink: 0, minWidth: 60, textAlign: 'center' }}>{item.tag}</span>
+            style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: `1px solid #EBEBEA`, background: !item.read ? '#FFFFFF' : 'transparent', cursor: 'pointer' }}>
+            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', color: item.read ? '#D0D0CC' : GOLD, background: item.read ? '#F3F3F0' : `${GOLD}18`, padding: '2px 6px', borderRadius: 3, flexShrink: 0, minWidth: 60, textAlign: 'center' }}>{item.tag}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 12, color: !item.read ? '#EDE8DD' : MUTED, margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</p>
+              <p style={{ fontSize: 12, color: !item.read ? '#1A1A18' : MUTED, margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</p>
             </div>
-            <span style={{ fontSize: 10, color: '#3A3A3A', flexShrink: 0 }}>{item.time}</span>
+            <span style={{ fontSize: 10, color: '#D0D0CC', flexShrink: 0 }}>{item.time}</span>
             {!item.read && <div style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />}
           </div>
         ))}
@@ -244,15 +244,15 @@ function AuthGate({ onDone }: { onDone: (userId: string, name: string) => void }
     save(data)
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#EDE8DD', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#F5F5F2', border: '1px solid #DDDDD8', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1A1A18', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080808' }}>
-      <div style={{ background: '#111', border: '1px solid #2A2A2A', borderRadius: 16, padding: '40px 36px', width: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.9)' }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#EDE8DD', marginBottom: 4, letterSpacing: '0.02em' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F7F7F5' }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDDDD8', borderRadius: 18, padding: '40px 36px', width: 400, boxShadow: '0 24px 64px rgba(0,0,0,0.12)' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#1A1A18', marginBottom: 4, letterSpacing: '0.02em' }}>
           {mode === 'register' ? 'Create your account' : 'Sign in'}
         </div>
-        <div style={{ fontSize: 12, color: '#555', marginBottom: 28 }}>
+        <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 28 }}>
           {mode === 'register' ? 'Enter your name and email to get started.' : 'Enter your email to access your workspace.'}
         </div>
 
@@ -262,15 +262,15 @@ function AuthGate({ onDone }: { onDone: (userId: string, name: string) => void }
 
         <input autoFocus={mode === 'login'} value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') mode === 'register' ? register() : login() }} placeholder="Email address" type="email" style={inputStyle} />
 
-        {error && <div style={{ fontSize: 12, color: '#B0221B', marginBottom: 12, lineHeight: 1.4 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: '#C0392B', marginBottom: 12, lineHeight: 1.4 }}>{error}</div>}
 
         <button onClick={mode === 'register' ? register : login}
           disabled={loading || !email.trim() || (mode === 'register' && !name.trim())}
-          style={{ width: '100%', background: GOLD, color: '#000', border: 'none', borderRadius: 8, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, marginTop: 4 }}>
+          style={{ width: '100%', background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.6 : 1, marginTop: 4 }}>
           {loading ? '…' : mode === 'register' ? 'Create account' : 'Sign in'}
         </button>
 
-        <div style={{ marginTop: 16, fontSize: 11, color: '#444', textAlign: 'center' }}>
+        <div style={{ marginTop: 16, fontSize: 11, color: '#6B7280', textAlign: 'center' }}>
           {mode === 'register'
             ? <>Already have an account? <button onClick={() => { setMode('login'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Sign in</button></>
             : <>New here? <button onClick={() => { setMode('register'); setError('') }} style={{ color: GOLD, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>Create an account</button></>}
@@ -450,7 +450,7 @@ export default function PMSystemPage() {
           onToggleCollapse={() => setSidebarCollapsed(v => !v)}
         />
 
-        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#0B0B0B' }}>
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#F7F7F5' }}>
           {activeNav === 'home' && (
             <HomeView boards={boards} allBoardData={allBoardData} onSelectBoard={id => { setSelectedBoardId(id); setActiveNav('board') }} userName={userName} memberCount={memberCount} />
           )}
@@ -460,39 +460,39 @@ export default function PMSystemPage() {
 
           {activeNav === 'board' && (
             loading || !boardData ? (
-              <div className="flex items-center justify-center flex-1" style={{ color: '#444' }}>
+              <div className="flex items-center justify-center flex-1" style={{ color: '#6B7280' }}>
                 <div className="w-5 h-5 border-t-transparent rounded-full animate-spin mr-3" style={{ border: `2px solid ${GOLD}`, borderTopColor: 'transparent' }} />
                 Loading board…
               </div>
             ) : (
               <>
                 {/* Board header */}
-                <div className="px-6 pt-5 pb-0 shrink-0" style={{ borderBottom: '1px solid #1E1E1E', background: '#0B0B0B' }}>
+                <div className="px-6 pt-5 pb-0 shrink-0" style={{ borderBottom: '1px solid #E8E8E4', background: '#F7F7F5' }}>
                   <div className="flex items-center gap-3 mb-4">
                     {renamingBoard ? (
                       <input autoFocus value={renameVal} onChange={e => setRenameVal(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') renameBoard(); if (e.key === 'Escape') setRenamingBoard(false) }}
                         onBlur={renameBoard}
-                        className="text-xl font-bold outline-none" style={{ color: '#F0F0F0', background: 'transparent', borderBottom: `2px solid ${GOLD}` }} />
+                        className="text-xl font-bold outline-none" style={{ color: '#1A1A18', background: 'transparent', borderBottom: `2px solid ${GOLD}` }} />
                     ) : (
-                      <h1 className="text-xl font-bold" style={{ color: '#F0F0F0' }}>{boardData.board.title}</h1>
+                      <h1 className="text-xl font-bold" style={{ color: '#1A1A18' }}>{boardData.board.title}</h1>
                     )}
 
                     {/* Board options dropdown */}
                     <div className="relative">
                       <button onClick={() => { setShowBoardMenu(v => !v); setRenameVal(boardData.board.title) }}
-                        className="text-sm px-1 rounded transition-colors" style={{ color: '#444', background: 'none', border: 'none', cursor: 'pointer' }}>▾</button>
+                        className="text-sm px-1 rounded transition-colors" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}>▾</button>
                       {showBoardMenu && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setShowBoardMenu(false)} />
-                          <div className="absolute top-8 left-0 z-50 rounded-xl shadow-xl w-44 py-1" style={{ background: '#111', border: '1px solid #2A2A2A' }}>
+                          <div className="absolute top-8 left-0 z-50 rounded-xl shadow-xl w-44 py-1" style={{ background: '#FFFFFF', border: '1px solid #DDDDD8' }}>
                             <button onClick={() => { setRenamingBoard(true); setShowBoardMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm" style={{ color: '#C0C0C0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                               Rename workspace
                             </button>
                             <button onClick={() => { navigator.clipboard.writeText(window.location.href); setShowBoardMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm" style={{ color: '#C0C0C0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                               Copy link
                             </button>
-                            <div className="my-1" style={{ borderTop: '1px solid #1E1E1E' }} />
+                            <div className="my-1" style={{ borderTop: '1px solid #E8E8E4' }} />
                             <button onClick={deleteBoard} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm" style={{ color: '#c0392b', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                               Delete workspace
                             </button>
@@ -502,9 +502,9 @@ export default function PMSystemPage() {
                     </div>
 
                     <div className="flex-1" />
-                    <button onClick={() => setShowIntegrate(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors" style={{ color: '#666', border: '1px solid #2A2A2A', background: 'transparent', cursor: 'pointer' }}>Integrate</button>
-                    <button onClick={() => setShowAutomate(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors" style={{ color: '#666', border: '1px solid #2A2A2A', background: 'transparent', cursor: 'pointer' }}>Automate</button>
-                    <button onClick={() => setShowInvite(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors" style={{ background: GOLD, color: '#000', border: 'none', cursor: 'pointer' }}>Invite</button>
+                    <button onClick={() => setShowIntegrate(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors" style={{ color: '#6B7280', border: '1px solid #DDDDD8', background: 'transparent', cursor: 'pointer' }}>Integrate</button>
+                    <button onClick={() => setShowAutomate(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors" style={{ color: '#6B7280', border: '1px solid #DDDDD8', background: 'transparent', cursor: 'pointer' }}>Automate</button>
+                    <button onClick={() => setShowInvite(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors" style={{ background: GOLD, color: '#FFFFFF', border: 'none', cursor: 'pointer' }}>Invite</button>
                   </div>
 
                   {/* Tabs */}

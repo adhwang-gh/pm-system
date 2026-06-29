@@ -3,10 +3,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { PMember } from './MondayCell'
 
-const GOLD = '#C9A24B'
-const BORDER = '#1E1E1E'
-const MUTED = '#8A8478'
-const TEXT = '#EDE8DD'
+const GOLD = '#3D5A80'
+const BORDER = '#E8E8E4'
+const MUTED = '#9A9A92'
+const TEXT = '#1A1A18'
 
 interface Update {
   id: string
@@ -68,9 +68,9 @@ function MemberCard({ member, update, isEditing, onEdit, onSave, onCancel, isMe 
   ]
 
   return (
-    <div style={{ background: '#111', border: `1px solid ${isEditing ? GOLD + '44' : BORDER}`, borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+    <div style={{ background: '#FFFFFF', border: `1px solid ${isEditing ? GOLD + '44' : BORDER}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}>
       <div style={{ padding: '14px 16px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', background: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#000', flexShrink: 0 }}>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#FFFFFF', flexShrink: 0 }}>
           {member.initials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -82,11 +82,11 @@ function MemberCard({ member, update, isEditing, onEdit, onSave, onCancel, isMe 
         {isMe && (
           isEditing ? (
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => onSave(draft)} style={{ fontSize: 11, background: GOLD, color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>Save</button>
+              <button onClick={() => onSave(draft)} style={{ fontSize: 11, background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, padding: '4px 10px', cursor: 'pointer', fontWeight: 700 }}>Save</button>
               <button onClick={onCancel} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
             </div>
           ) : (
-            <button onClick={onEdit} style={{ fontSize: 11, color: GOLD, background: 'transparent', border: `1px solid ${GOLD}44`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>
+            <button onClick={onEdit} style={{ fontSize: 11, color: GOLD, background: 'transparent', border: `1px solid ${GOLD}44`, borderRadius: 10, padding: '4px 10px', cursor: 'pointer' }}>
               {hasUpdate ? 'Edit' : 'Add update'}
             </button>
           )
@@ -101,7 +101,7 @@ function MemberCard({ member, update, isEditing, onEdit, onSave, onCancel, isMe 
                 <div style={{ fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{f.label}</div>
                 <textarea value={draft[f.key]} onChange={e => setDraft(prev => ({ ...prev, [f.key]: e.target.value }))}
                   placeholder={f.placeholder} rows={2}
-                  style={{ width: '100%', background: '#0D0D0D', border: `1px solid #2A2A2A`, borderRadius: 7, padding: '7px 10px', fontSize: 12, color: TEXT, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  style={{ width: '100%', background: '#FAFAF8', border: `1px solid #DDDDD8`, borderRadius: 7, padding: '7px 10px', fontSize: 12, color: TEXT, outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               </div>
             ))}
           </div>
@@ -115,7 +115,7 @@ function MemberCard({ member, update, isEditing, onEdit, onSave, onCancel, isMe 
             ))}
           </div>
         ) : (
-          <div style={{ fontSize: 12, color: '#333', fontStyle: 'italic', padding: '8px 0' }}>No update submitted yet</div>
+          <div style={{ fontSize: 12, color: '#374151', fontStyle: 'italic', padding: '8px 0' }}>No update submitted yet</div>
         )}
       </div>
     </div>
@@ -157,33 +157,33 @@ export default function WeeklyUpdatesView({ userId }: { userId?: string }) {
   const submitted = updates.filter(u => u.progress || u.plan || u.problems || u.products).length
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: '#0B0B0B', padding: '28px 32px' }}>
+    <div style={{ flex: 1, overflowY: 'auto', background: '#F7F7F5', padding: '28px 32px' }}>
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 6 }}>
           <div>
-            <h1 style={{ color: '#F0F0F0', fontWeight: 700, fontSize: 22, margin: 0 }}>Weekly Updates</h1>
-            <p style={{ color: '#555', fontSize: 13, marginTop: 4 }}>Progress · Plan · Problems · Products</p>
+            <h1 style={{ color: '#1A1A18', fontWeight: 700, fontSize: 22, margin: 0 }}>Weekly Updates</h1>
+            <p style={{ color: '#6B7280', fontSize: 13, marginTop: 4 }}>Progress · Plan · Problems · Products</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, color: '#555' }}>{submitted}/{members.length} submitted</span>
-            <div style={{ width: 80, height: 4, background: '#222', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${members.length ? (submitted / members.length) * 100 : 0}%`, height: '100%', background: GOLD, borderRadius: 4, transition: 'width 0.3s' }} />
+            <span style={{ fontSize: 12, color: '#6B7280' }}>{submitted}/{members.length} submitted</span>
+            <div style={{ width: 80, height: 4, background: '#222', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ width: `${members.length ? (submitted / members.length) * 100 : 0}%`, height: '100%', background: GOLD, borderRadius: 10, transition: 'width 0.3s' }} />
             </div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
           <button onClick={() => { const d = new Date(weekOf + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 7); setWeekOf(d.toISOString().slice(0, 10)); setEditingId(null) }}
-            style={{ background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 7, padding: '5px 12px', color: '#888', cursor: 'pointer', fontSize: 13 }}>← Prev</button>
-          <div style={{ background: '#1A1A1A', border: `1px solid ${GOLD}55`, borderRadius: 8, padding: '5px 16px', color: GOLD, fontWeight: 600, fontSize: 13 }}>
+            style={{ background: '#F5F5F2', border: '1px solid #DDDDD8', borderRadius: 7, padding: '5px 12px', color: '#888', cursor: 'pointer', fontSize: 13 }}>← Prev</button>
+          <div style={{ background: '#F5F5F2', border: `1px solid ${GOLD}55`, borderRadius: 10, padding: '5px 16px', color: GOLD, fontWeight: 600, fontSize: 13 }}>
             {formatWeek(weekOf)}{isCurrentWeek && <span style={{ marginLeft: 8, fontSize: 10, color: '#888', fontWeight: 400 }}>this week</span>}
           </div>
           <button onClick={() => { const d = new Date(weekOf + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 7); const n = d.toISOString().slice(0, 10); if (n <= getSunday(new Date())) { setWeekOf(n); setEditingId(null) } }}
-            disabled={isCurrentWeek} style={{ background: '#1A1A1A', border: '1px solid #2A2A2A', borderRadius: 7, padding: '5px 12px', color: isCurrentWeek ? '#333' : '#888', cursor: isCurrentWeek ? 'default' : 'pointer', fontSize: 13 }}>Next →</button>
+            disabled={isCurrentWeek} style={{ background: '#F5F5F2', border: '1px solid #DDDDD8', borderRadius: 7, padding: '5px 12px', color: isCurrentWeek ? '#333' : '#888', cursor: isCurrentWeek ? 'default' : 'pointer', fontSize: 13 }}>Next →</button>
         </div>
       </div>
 
       {members.length === 0 ? (
-        <div style={{ color: '#444', textAlign: 'center', padding: '60px 0', fontSize: 14 }}>
+        <div style={{ color: '#6B7280', textAlign: 'center', padding: '60px 0', fontSize: 14 }}>
           No team members yet. Add people via the person column in any board.
         </div>
       ) : (
