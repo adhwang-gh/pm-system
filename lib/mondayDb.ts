@@ -116,19 +116,19 @@ export async function initMondaySchema() {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  'Done': '#22C55E',
-  'On track': '#4ADE80',
-  'At risk': '#F59E0B',
-  'Stuck': '#EF4444',
-  "Haven't started yet": '#CBD5E1',
-  'High': '#EF4444',
-  'Medium': '#F59E0B',
-  'Low': '#60A5FA',
-  'Critical': '#DC2626',
-  'Upcoming': '#94A3B8',
-  'Ongoing': '#3B82F6',
-  'Completed': '#22C55E',
-  'Planning': '#A78BFA',
+  'Done': '#DCFCE7',
+  'On track': '#D1FAE5',
+  "Haven't started yet": '#F1F5F9',
+  'At risk': '#FEF3C7',
+  'Stuck': '#FEE2E2',
+  'High': '#FEE2E2',
+  'Medium': '#FEF3C7',
+  'Low': '#DBEAFE',
+  'Critical': '#FECACA',
+  'Upcoming': '#EDE9FE',
+  'Ongoing': '#DBEAFE',
+  'Completed': '#DCFCE7',
+  'Planning': '#EDE9FE',
 }
 
 export async function migrateColorsAndCleanup(userId: string) {
@@ -189,9 +189,9 @@ export async function seedForUser(userId: string) {
   const cols = [
     { id: randomUUID(), title: 'PM', type: 'person', width: 60, options: '[]' },
     { id: randomUUID(), title: 'Overview', type: 'text', width: 260, options: '[]' },
-    { id: randomUUID(), title: 'Project status', type: 'status', width: 180, options: JSON.stringify({ values: ['On track', "Haven't started yet", 'At risk', 'Stuck', 'Done'], colors: { 'On track': '#4ADE80', "Haven't started yet": '#CBD5E1', 'At risk': '#F59E0B', 'Stuck': '#EF4444', 'Done': '#22C55E' } }) },
-    { id: randomUUID(), title: 'Priority', type: 'status', width: 140, options: JSON.stringify({ values: ['High', 'Medium', 'Low', 'Critical'], colors: { High: '#EF4444', Medium: '#F59E0B', Low: '#60A5FA', Critical: '#DC2626' } }) },
-    { id: randomUUID(), title: 'Phase', type: 'status', width: 140, options: JSON.stringify({ values: ['Upcoming', 'Ongoing', 'Completed', 'Planning'], colors: { Upcoming: '#94A3B8', Ongoing: '#3B82F6', Completed: '#22C55E', Planning: '#A78BFA' } }) },
+    { id: randomUUID(), title: 'Project status', type: 'status', width: 180, options: JSON.stringify({ values: ['On track', "Haven't started yet", 'At risk', 'Stuck', 'Done'], colors: { 'On track': '#D1FAE5', "Haven't started yet": '#F1F5F9', 'At risk': '#FEF3C7', 'Stuck': '#FEE2E2', 'Done': '#DCFCE7' } }) },
+    { id: randomUUID(), title: 'Priority', type: 'status', width: 140, options: JSON.stringify({ values: ['High', 'Medium', 'Low', 'Critical'], colors: { High: '#FEE2E2', Medium: '#FEF3C7', Low: '#DBEAFE', Critical: '#FECACA' } }) },
+    { id: randomUUID(), title: 'Phase', type: 'status', width: 140, options: JSON.stringify({ values: ['Upcoming', 'Ongoing', 'Completed', 'Planning'], colors: { Upcoming: '#EDE9FE', Ongoing: '#DBEAFE', Completed: '#DCFCE7', Planning: '#EDE9FE' } }) },
     { id: randomUUID(), title: 'Timeline', type: 'timeline', width: 160, options: '[]' },
   ]
   for (let i = 0; i < cols.length; i++) {
