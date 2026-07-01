@@ -21,6 +21,7 @@ interface Props {
   onAddItem: (groupId: string, title: string) => void
   onAddGroup: (title: string) => void
   onToggleGroup: (groupId: string, collapsed: boolean) => void
+  onDeleteGroup?: (groupId: string) => void
   userId?: string
 }
 
@@ -76,16 +77,17 @@ function DynGroupSection({ label, color, items, columns, hiddenCols, selectedIds
   )
 }
 
-function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, hiddenCols, selectedIds, onToggleSelect, onSelectAll, userId, triggerAdd }: {
+function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, onDeleteGroup, hiddenCols, selectedIds, onToggleSelect, onSelectAll, userId, triggerAdd }: {
   group: MGroup; columns: MColumn[]; items: MItem[]; hiddenCols: Set<string>
   selectedIds: Set<string>; onToggleSelect: (id: string) => void; onSelectAll: (ids: string[]) => void
   onUpdateItem: (itemId: string, title?: string, data?: Record<string, string | number>) => void
   onDeleteItem: (itemId: string) => void; onAddItem: (title: string) => void; onToggle: (collapsed: boolean) => void
-  userId?: string; triggerAdd?: number
+  onDeleteGroup?: () => void; userId?: string; triggerAdd?: number
 }) {
   const [collapsed, setCollapsed] = useState(group.collapsed === 1)
   const [addingItem, setAddingItem] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [headerHovered, setHeaderHovered] = useState(false)
 
   useEffect(() => { if (triggerAdd) { setCollapsed(false); setAddingItem(true) } }, [triggerAdd])
   const visibleCols = columns.filter(c => !hiddenCols.has(c.id))
@@ -98,10 +100,14 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
     <tbody>
       <tr>
         <td colSpan={visibleCols.length + 3} style={{ paddingTop: 16, paddingBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${group.color}` }}>
+          <div onMouseEnter={() => setHeaderHovered(true)} onMouseLeave={() => setHeaderHovered(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${group.color}` }}>
             <button onClick={toggle} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, width: 14 }}>{collapsed ? '▸' : '▾'}</button>
             <span style={{ fontWeight: 700, fontSize: 12, color: group.color, letterSpacing: '0.02em' }}>{group.title}</span>
             <span style={{ fontSize: 10, color: MUTED, background: '#F3F3F0', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
+            {headerHovered && onDeleteGroup && (
+              <button onClick={() => { if (confirm(`Delete group "${group.title}" and all its items?`)) onDeleteGroup() }}
+                title="Delete group" style={{ marginLeft: 4, color: '#9A9A92', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11 }}>✕</button>
+            )}
           </div>
         </td>
       </tr>
@@ -182,7 +188,8 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }} onDoubleClick={() => setEditingTitle(true)}>
             <span style={{ fontSize: 13, color: TEXT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title || 'Untitled'}</span>
-            {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
+            {hovered && <button onClick={e => { e.stopPropagation(); setEditingTitle(true) }} title="Edit title" style={{ color: '#9A9A92', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, flexShrink: 0, lineHeight: 1 }}>✎</button>}
+            {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} title="Delete" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
           </div>
         )}
       </td>
@@ -196,7 +203,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
   )
 }
 
-export default function MondayTable({ groups, columns, items, onUpdateItem, onDeleteItem, onAddItem, onAddGroup, onToggleGroup, userId }: Props) {
+export default function MondayTable({ groups, columns, items, onUpdateItem, onDeleteItem, onAddItem, onAddGroup, onToggleGroup, onDeleteGroup, userId }: Props) {
   const [search, setSearch] = useState('')
   const [showFilter, setShowFilter] = useState(false)
   const [showSort, setShowSort] = useState(false)
@@ -444,7 +451,9 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                   onSelectAll={(ids) => handleSelectAll(ids)}
                   onUpdateItem={onUpdateItem} onDeleteItem={onDeleteItem}
                   onAddItem={(title) => onAddItem(group.id, title)}
-                  onToggle={(c) => onToggleGroup(group.id, c)} userId={userId}
+                  onToggle={(c) => onToggleGroup(group.id, c)}
+                  onDeleteGroup={onDeleteGroup ? () => onDeleteGroup(group.id) : undefined}
+                  userId={userId}
                   triggerAdd={gi === 0 ? addTrigger : undefined} />
               )
             })}

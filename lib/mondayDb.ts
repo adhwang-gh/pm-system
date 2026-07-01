@@ -231,3 +231,19 @@ export async function seedForUser(userId: string) {
     })
   }
 }
+
+export async function ensureNotificationsTable() {
+  const turso = getTurso()
+  try {
+    await turso.execute(`CREATE TABLE IF NOT EXISTS pm_notifications (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      text TEXT NOT NULL,
+      board_title TEXT DEFAULT '',
+      item_title TEXT DEFAULT '',
+      read INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`)
+  } catch {}
+}

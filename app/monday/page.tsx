@@ -5,8 +5,6 @@ import { MBoard, MColumn, MGroup, MItem } from '@/components/monday/types'
 import MondaySidebar, { NavView } from '@/components/monday/MondaySidebar'
 import MondayTopBar from '@/components/monday/MondayTopBar'
 import MondayTable from '@/components/monday/MondayTable'
-import IntegrateModal from '@/components/monday/IntegrateModal'
-import AutomateModal from '@/components/monday/AutomateModal'
 import WeeklyUpdatesView from '@/components/monday/WeeklyUpdatesView'
 
 const GOLD = '#3D5A80'
@@ -14,35 +12,33 @@ const GOLD = '#3D5A80'
 interface BoardData { board: MBoard; groups: MGroup[]; columns: MColumn[]; items: MItem[] }
 
 /* ─── Modals ─── */
-function InviteModal({ onClose }: { onClose: () => void }) {
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState('Editor')
-  const [sent, setSent] = useState(false)
-  const send = () => { if (!email.trim()) return; setSent(true); setTimeout(onClose, 1500) }
+/* ─── Profile modal ─── */
+function ProfileModal({ userId, currentName, onClose, onSaved }: { userId: string; currentName: string; onClose: () => void; onSaved: (name: string) => void }) {
+  const [name, setName] = useState(currentName)
+  const [saving, setSaving] = useState(false)
+  const save = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    const res = await fetch('/monday/api/auth/me', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId }, body: JSON.stringify({ name: name.trim() }) })
+    if (res.ok) {
+      const data = await res.json()
+      localStorage.setItem('pm_user_name', data.name)
+      onSaved(data.name)
+      onClose()
+    }
+    setSaving(false)
+  }
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={onClose}>
-      <div className="rounded-2xl shadow-2xl w-[440px] p-6" style={{ background: '#FFFFFF', border: '1px solid #DDDDD8' }} onClick={e => e.stopPropagation()}>
-        <h2 className="text-lg font-bold mb-1" style={{ color: '#1A1A18' }}>Invite to workspace</h2>
-        <p className="text-sm mb-5" style={{ color: '#6B7280' }}>Team members can access all boards in this workspace.</p>
-        {sent ? (
-          <div className="text-center py-4"><div className="text-3xl mb-2">✅</div><p className="font-medium" style={{ color: GOLD }}>Invitation sent!</p></div>
-        ) : (
-          <>
-            <div className="space-y-3">
-              <input value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }}
-                placeholder="Enter email address" type="email"
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={{ background: '#F5F5F2', border: '1px solid #DDDDD8', color: '#1A1A18' }} />
-              <select value={role} onChange={e => setRole(e.target.value)}
-                className="w-full rounded-lg px-3 py-2.5 text-sm outline-none" style={{ background: '#F5F5F2', border: '1px solid #DDDDD8', color: '#1A1A18' }}>
-                <option>Admin</option><option>Editor</option><option>Viewer</option>
-              </select>
-            </div>
-            <div className="flex gap-3 mt-5">
-              <button onClick={onClose} className="flex-1 py-2.5 rounded-lg text-sm" style={{ border: '1px solid #DDDDD8', color: '#6B7280', background: 'transparent' }}>Cancel</button>
-              <button onClick={send} disabled={!email.trim()} className="flex-1 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-40" style={{ background: GOLD, color: '#FFFFFF', border: 'none' }}>Send invite</button>
-            </div>
-          </>
-        )}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DDDDD8', borderRadius: 16, padding: '28px 28px', width: 380, boxShadow: '0 16px 48px rgba(0,0,0,0.16)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ fontSize: 17, fontWeight: 700, color: '#1A1A18', marginBottom: 4 }}>Edit profile</div>
+        <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 20 }}>Update your display name.</div>
+        <input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onClose() }}
+          placeholder="Your full name" style={{ width: '100%', background: '#F5F5F2', border: '1px solid #DDDDD8', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#1A1A18', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, border: '1px solid #DDDDD8', color: '#6B7280', background: 'transparent', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={save} disabled={!name.trim() || saving} style={{ flex: 1, padding: '10px 0', borderRadius: 10, fontSize: 13, fontWeight: 700, background: GOLD, color: '#FFFFFF', border: 'none', cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>Save</button>
+        </div>
       </div>
     </div>
   )
@@ -175,19 +171,40 @@ function MyWorkView({ allBoardData, myMemberId }: { allBoardData: Record<string,
 }
 
 /* ─── Inbox view ─── */
-function InboxView() {
-  const [items, setItems] = useState([
-    { id: '1', tag: 'STATUS', text: 'Q3 Campaign Brief marked as Done', time: '2h ago', read: false },
-    { id: '2', tag: 'COMMENT', text: 'James Park commented on "Landing page redesign"', time: '4h ago', read: false },
-    { id: '3', tag: 'ASSIGN', text: 'You were assigned to "SEO blog posts"', time: '1d ago', read: false },
-    { id: '4', tag: 'DUE', text: 'Deadline tomorrow: "Product launch copy"', time: '1d ago', read: true },
-    { id: '5', tag: 'MEMBER', text: 'Mia Chen joined your workspace', time: '2d ago', read: true },
-  ])
-  const markRead = (id: string) => setItems(prev => prev.map(i => i.id === id ? { ...i, read: true } : i))
-  const markAllRead = () => setItems(prev => prev.map(i => ({ ...i, read: true })))
-  const unread = items.filter(i => !i.read).length
+function InboxView({ userId }: { userId: string }) {
+  type Notif = { id: string; type: string; text: string; board_title: string; item_title: string; read: number; created_at: string }
+  const [items, setItems] = useState<Notif[]>([])
+  const [loadingNotifs, setLoadingNotifs] = useState(true)
   const BORDER = '#E8E8E4'
   const MUTED = '#9A9A92'
+
+  useEffect(() => {
+    if (!userId) return
+    fetch('/monday/api/notifications', { headers: { 'X-Pm-User-Id': userId } })
+      .then(r => r.json()).then(data => { setItems(Array.isArray(data) ? data : []); setLoadingNotifs(false) })
+      .catch(() => setLoadingNotifs(false))
+  }, [userId])
+
+  const markRead = async (id: string) => {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, read: 1 } : i))
+    await fetch('/monday/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId }, body: JSON.stringify({ action: 'mark_read', id }) })
+  }
+  const markAllRead = async () => {
+    setItems(prev => prev.map(i => ({ ...i, read: 1 })))
+    await fetch('/monday/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId }, body: JSON.stringify({ action: 'mark_read', all: true }) })
+  }
+
+  const tagLabel = (type: string) => ({ status: 'STATUS', person: 'ASSIGN' }[type] ?? type.toUpperCase().slice(0, 7))
+  const timeAgo = (iso: string) => {
+    const diff = Date.now() - new Date(iso + (iso.includes('Z') ? '' : 'Z')).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 60) return `${m}m ago`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h}h ago`
+    return `${Math.floor(h / 24)}d ago`
+  }
+
+  const unread = items.filter(i => !i.read).length
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '40px 48px', background: '#F7F7F5' }}>
@@ -202,19 +219,29 @@ function InboxView() {
           </button>
         )}
       </div>
-      <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
-        {items.map(item => (
-          <div key={item.id} onClick={() => markRead(item.id)}
-            style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: `1px solid #EBEBEA`, background: !item.read ? '#FFFFFF' : 'transparent', cursor: 'pointer' }}>
-            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', color: item.read ? '#D0D0CC' : GOLD, background: item.read ? '#F3F3F0' : `${GOLD}18`, padding: '2px 6px', borderRadius: 3, flexShrink: 0, minWidth: 60, textAlign: 'center' }}>{item.tag}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 12, color: !item.read ? '#1A1A18' : MUTED, margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</p>
+      {loadingNotifs ? (
+        <div style={{ color: '#9A9A92', fontSize: 13 }}>Loading…</div>
+      ) : items.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '64px 0', color: '#9A9A92' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>◈</div>
+          <p style={{ margin: '0 0 6px', fontWeight: 500, color: '#1A1A18', fontSize: 14 }}>You&apos;re all caught up</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#9A9A92', maxWidth: 280, lineHeight: 1.5 }}>Notifications will appear here when project statuses change or items are assigned.</p>
+        </div>
+      ) : (
+        <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
+          {items.map(item => (
+            <div key={item.id} onClick={() => markRead(item.id)}
+              style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 20px', borderBottom: `1px solid #EBEBEA`, background: !item.read ? '#FFFFFF' : 'transparent', cursor: 'pointer' }}>
+              <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', color: item.read ? '#D0D0CC' : GOLD, background: item.read ? '#F3F3F0' : `${GOLD}18`, padding: '2px 6px', borderRadius: 3, flexShrink: 0, minWidth: 60, textAlign: 'center' }}>{tagLabel(item.type)}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, color: !item.read ? '#1A1A18' : MUTED, margin: 0, lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.text}</p>
+              </div>
+              <span style={{ fontSize: 10, color: '#D0D0CC', flexShrink: 0 }}>{timeAgo(item.created_at)}</span>
+              {!item.read && <div style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />}
             </div>
-            <span style={{ fontSize: 10, color: '#D0D0CC', flexShrink: 0 }}>{item.time}</span>
-            {!item.read && <div style={{ width: 5, height: 5, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -297,9 +324,6 @@ export default function PMSystemPage() {
   const [allBoardData, setAllBoardData] = useState<Record<string, BoardData>>({})
   const [loading, setLoading] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [showInvite, setShowInvite] = useState(false)
-  const [showIntegrate, setShowIntegrate] = useState(false)
-  const [showAutomate, setShowAutomate] = useState(false)
   const [activeNav, setActiveNav] = useState<NavView>('board')
   const [showBoardMenu, setShowBoardMenu] = useState(false)
   const [renamingBoard, setRenamingBoard] = useState(false)
@@ -310,6 +334,8 @@ export default function PMSystemPage() {
   const [memberCount, setMemberCount] = useState(0)
   const [userId, setUserId] = useState<string>('')
   const [savedToast, setSavedToast] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Check auth state on mount
   useEffect(() => {
@@ -322,9 +348,22 @@ export default function PMSystemPage() {
     } else {
       setShowAuth(true)
     }
+    setIsMobile(window.innerWidth < 768)
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   const pmHeaders: Record<string, string> = userId ? { 'X-Pm-User-Id': userId } : {}
+
+  // Fetch canonical name from DB (fixes truncated name stored at registration)
+  useEffect(() => {
+    if (!userId) return
+    fetch('/monday/api/auth/me', { headers: { 'X-Pm-User-Id': userId } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.name) { setUserName(data.name); localStorage.setItem('pm_user_name', data.name) } })
+      .catch(() => {})
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!userId) return
@@ -400,6 +439,15 @@ export default function PMSystemPage() {
       body: JSON.stringify({ group_id: targetGroupId, title }),
     })
     const item = await res.json()
+    // Auto-assign current user to PM column
+    const pmCol = boardData.columns.find(c => c.type === 'person')
+    if (pmCol && userId) {
+      await fetch(`/monday/api/boards/${selectedBoardId}/items`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: item.id, data: { [pmCol.id]: userId } }),
+      })
+      item.data = { ...item.data, [pmCol.id]: userId }
+    }
     setBoardData(prev => prev ? { ...prev, items: [...prev.items, item] } : prev)
   }
 
@@ -434,6 +482,19 @@ export default function PMSystemPage() {
     setBoardData(prev => prev ? { ...prev, groups: [...prev.groups, group] } : prev)
   }
 
+  const deleteGroup = async (groupId: string) => {
+    if (!selectedBoardId) return
+    await fetch(`/monday/api/boards/${selectedBoardId}/groups`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groupId }),
+    })
+    setBoardData(prev => prev ? {
+      ...prev,
+      groups: prev.groups.filter(g => g.id !== groupId),
+      items: prev.items.filter(it => it.group_id !== groupId),
+    } : prev)
+  }
+
   const toggleGroup = async (groupId: string, collapsed: boolean) => {
     if (!selectedBoardId) return
     await fetch(`/monday/api/boards/${selectedBoardId}/groups`, {
@@ -449,6 +510,13 @@ export default function PMSystemPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {isMobile && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#F7F7F5', padding: 32, textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🖥️</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#1A1A18', marginBottom: 8 }}>PM System works best on desktop</div>
+          <div style={{ fontSize: 13, color: '#6B7280', maxWidth: 300, lineHeight: 1.6 }}>Please open this on a laptop or desktop for the full experience. The table view isn&apos;t optimized for small screens yet.</div>
+        </div>
+      )}
       <MondayTopBar />
       {savedToast && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100, background: '#1A1A18', color: '#FFFFFF', fontSize: 12, fontWeight: 500, padding: '8px 16px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.04em' }}>
@@ -466,6 +534,7 @@ export default function PMSystemPage() {
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(v => !v)}
           userName={userName}
+          onProfileEdit={() => setShowProfile(true)}
         />
 
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#F7F7F5' }}>
@@ -473,7 +542,7 @@ export default function PMSystemPage() {
             <HomeView boards={boards} allBoardData={allBoardData} onSelectBoard={id => { setSelectedBoardId(id); setActiveNav('board') }} userName={userName} memberCount={memberCount} />
           )}
           {activeNav === 'mywork' && <MyWorkView allBoardData={allBoardData} myMemberId={myMemberId} />}
-          {activeNav === 'inbox' && <InboxView />}
+          {activeNav === 'inbox' && <InboxView userId={userId} />}
           {activeNav === 'updates' && <WeeklyUpdatesView userId={userId} />}
 
           {activeNav === 'board' && (
@@ -520,9 +589,9 @@ export default function PMSystemPage() {
                     </div>
 
                     <div className="flex-1" />
-                    <button onClick={() => setShowIntegrate(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors" style={{ color: '#6B7280', border: '1px solid #DDDDD8', background: 'transparent', cursor: 'pointer' }}>Integrate</button>
-                    <button onClick={() => setShowAutomate(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors" style={{ color: '#6B7280', border: '1px solid #DDDDD8', background: 'transparent', cursor: 'pointer' }}>Automate</button>
-                    <button onClick={() => setShowInvite(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors" style={{ background: GOLD, color: '#FFFFFF', border: 'none', cursor: 'pointer' }}>Invite</button>
+                    <div title="Coming soon" style={{ cursor: 'not-allowed' }}><button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg" style={{ color: '#C0C0C0', border: '1px solid #EBEBEA', background: 'transparent', cursor: 'not-allowed' }}>Integrate</button></div>
+                    <div title="Coming soon" style={{ cursor: 'not-allowed' }}><button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg" style={{ color: '#C0C0C0', border: '1px solid #EBEBEA', background: 'transparent', cursor: 'not-allowed' }}>Automate</button></div>
+                    <div title="Coming soon" style={{ cursor: 'not-allowed' }}><button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg" style={{ background: '#C0C0C0', color: '#FFFFFF', border: 'none', cursor: 'not-allowed' }}>Invite</button></div>
                   </div>
 
                   {/* Tabs */}
@@ -543,6 +612,7 @@ export default function PMSystemPage() {
                   onAddItem={addItem}
                   onAddGroup={addGroup}
                   onToggleGroup={toggleGroup}
+                  onDeleteGroup={deleteGroup}
                   userId={userId}
                 />
               </>
@@ -552,9 +622,7 @@ export default function PMSystemPage() {
       </div>
 
       {showAuth && <AuthGate onDone={(uid, name) => { setUserId(uid); setUserName(name); setMyMemberId(uid); setShowAuth(false) }} />}
-      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
-      {showIntegrate && selectedBoardId && <IntegrateModal boardId={selectedBoardId} onClose={() => setShowIntegrate(false)} />}
-      {showAutomate && selectedBoardId && <AutomateModal boardId={selectedBoardId} onClose={() => setShowAutomate(false)} />}
+      {showProfile && userName && <ProfileModal userId={userId} currentName={userName} onClose={() => setShowProfile(false)} onSaved={name => { setUserName(name); setMyMemberId(userId) }} />}
     </div>
   )
 }

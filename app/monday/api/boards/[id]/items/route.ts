@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { getTurso, toRows } from '@/lib/tursoClient'
 import { randomUUID } from 'crypto'
+import { ensureNotificationsTable } from '@/lib/mondayDb'
+
+async function writeNotification(turso: ReturnType<typeof getTurso>, userId: string, type: string, text: string, boardTitle: string, itemTitle: string) {
+  try {
+    await ensureNotificationsTable()
+    await turso.execute({ sql: 'INSERT INTO pm_notifications (id, user_id, type, text, board_title, item_title) VALUES (?, ?, ?, ?, ?, ?)', args: [randomUUID(), userId, type, text, boardTitle, itemTitle] })
+  } catch {}
+}
 
 async function fireWebhooks(turso: ReturnType<typeof getTurso>, boardId: string, eventType: string, payload: Record<string, unknown>) {
   const webhookTypes = ['slack', 'zapier']
@@ -83,6 +91,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       await turso.execute({ sql: 'UPDATE monday_items SET data = ? WHERE id = ?', args: [JSON.stringify(afterAuto), itemId] })
       const changedKeys = Object.keys(data).filter(k => oldData[k] !== data[k])
       if (changedKeys.length > 0) await fireWebhooks(turso, boardId, 'item_updated', { item_id: itemId, changed_fields: changedKeys })
+
+      // Write notifications for status/person changes
+      const userId = req.headers.get('X-Pm-User-Id')
+      if (userId && changedKeys.length > 0) {
+        const boardRes = await turso.execute({ sql: 'SELECT title FROM monday_boards WHERE id = ?', args: [boardId] })
+        const boardTitle = String(boardRes.rows[0]?.title ?? '')
+        const itemTitle = String(existing.title ?? '')
+        const colsRes = await turso.execute({ sql: 'SELECT * FROM monday_columns WHERE board_id = ?', args: [boardId] })
+        for (const key of changedKeys) {
+          const col = colsRes.rows.find(c => c.id === key)
+          if (!col) continue
+          if (col.type === 'status') {
+            const newVal = String(afterAuto[key] ?? '')
+            if (newVal) await writeNotification(turso, userId, 'status', `"${itemTitle}" status changed to ${newVal}`, boardTitle, itemTitle)
+          } else if (col.type === 'person') {
+            const newVal = String(afterAuto[key] ?? '')
+            if (newVal) await writeNotification(turso, userId, 'person', `You were assigned to "${itemTitle}"`, boardTitle, itemTitle)
+          }
+        }
+      }
     }
   }
 

@@ -27,3 +27,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const group = (await turso.execute({ sql: 'SELECT * FROM monday_groups WHERE id = ?', args: [groupId] })).rows[0]
   return NextResponse.json(Object.fromEntries(Object.entries(group)))
 }
+
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  await params
+  const turso = getTurso()
+  const { groupId } = await req.json()
+  await turso.execute({ sql: 'DELETE FROM monday_items WHERE group_id = ?', args: [groupId] })
+  await turso.execute({ sql: 'DELETE FROM monday_groups WHERE id = ?', args: [groupId] })
+  return NextResponse.json({ ok: true })
+}

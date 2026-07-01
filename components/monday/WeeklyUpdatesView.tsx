@@ -182,6 +182,16 @@ export default function WeeklyUpdatesView({ userId }: { userId?: string }) {
         </div>
       </div>
 
+      {isCurrentWeek && myMemberId && members.some(m => m.id === myMemberId) && !updates.find(u => u.member_key === myMemberId && (u.progress || u.plan || u.problems || u.products)) && (
+        <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 16 }}>⚠️</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#92400E' }}>You haven&apos;t submitted your update this week</div>
+            <div style={{ fontSize: 11, color: '#B45309', marginTop: 2 }}>Click &quot;Add update&quot; on your card below to share your progress.</div>
+          </div>
+        </div>
+      )}
+
       {members.length === 0 ? (
         <div style={{ color: '#6B7280', textAlign: 'center', padding: '60px 0', fontSize: 14 }}>
           No team members yet. Add people via the person column in any board.
