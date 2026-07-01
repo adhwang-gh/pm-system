@@ -217,15 +217,27 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
   /* ── Timeline ── */
   if (col.type === 'timeline') {
     const [start, end] = str.split('|')
-    const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) } catch { return d } }
-    const label = str ? `${fmtDate(start)} – ${fmtDate(end)}` : ''
+    const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return d } }
+    const label = str ? `${fmtDate(start)} → ${fmtDate(end)}` : ''
+    const today = Date.now()
+    const startMs = start ? new Date(start).getTime() : 0
+    const endMs = end ? new Date(end).getTime() : 0
+    const pct = (startMs && endMs && endMs > startMs) ? Math.min(100, Math.max(0, Math.round((today - startMs) / (endMs - startMs) * 100))) : 0
+    const isPast = endMs && today > endMs
+    const isFuture = startMs && today < startMs
+    const barColor = isPast ? '#22C55E' : isFuture ? '#CBD5E1' : '#3D5A80'
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 6px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 6px', overflow: 'hidden' }}>
         {str ? (
-          <button onClick={() => setEditing(true)}
-            style={{ fontSize: 10, fontWeight: 500, color: TEXT, background: '#F3F3F0', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '3px 8px', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
-            {label}
-          </button>
+          <>
+            <button onClick={() => setEditing(true)}
+              style={{ fontSize: 10, fontWeight: 500, color: TEXT, background: '#F3F3F0', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '2px 8px', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+              {label}
+            </button>
+            <div style={{ width: '100%', height: 3, background: '#E8E8E4', borderRadius: 99, marginTop: 3, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: 99, transition: 'width 0.3s' }} />
+            </div>
+          </>
         ) : (
           <button onClick={() => setEditing(true)} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Set dates</button>
         )}

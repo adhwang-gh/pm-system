@@ -26,6 +26,56 @@ interface Props {
 
 type SortDir = 'asc' | 'desc'
 
+function DynGroupSection({ label, color, items, columns, hiddenCols, selectedIds, onToggleSelect, onSelectAll, onUpdateItem, onDeleteItem, userId }: {
+  label: string; color: string; items: MItem[]; columns: MColumn[]; hiddenCols: Set<string>;
+  selectedIds: Set<string>; onToggleSelect: (id: string) => void; onSelectAll: (ids: string[]) => void;
+  onUpdateItem: (itemId: string, title?: string, data?: Record<string, string | number>) => void;
+  onDeleteItem: (itemId: string) => void; userId?: string;
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+  const visibleCols = columns.filter(c => !hiddenCols.has(c.id))
+  const allSelected = items.length > 0 && items.every(it => selectedIds.has(it.id))
+
+  return (
+    <tbody>
+      <tr>
+        <td colSpan={visibleCols.length + 3} style={{ paddingTop: 16, paddingBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${color}` }}>
+            <button onClick={() => setCollapsed(v => !v)} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, width: 14 }}>{collapsed ? '▸' : '▾'}</button>
+            <span style={{ fontWeight: 700, fontSize: 12, color: color, letterSpacing: '0.02em' }}>{label || '(none)'}</span>
+            <span style={{ fontSize: 10, color: MUTED, background: '#F3F3F0', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
+          </div>
+        </td>
+      </tr>
+
+      {!collapsed && (
+        <tr style={{ background: '#FFFFFF' }}>
+          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${color}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
+              <input type="checkbox" checked={allSelected} onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }} />
+            </div>
+          </td>
+          <th style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '8px 12px', minWidth: 280, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'IBM Plex Mono', monospace" }}>Project</th>
+          {visibleCols.map(col => (
+            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#FFFFFF', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: "'IBM Plex Mono', monospace" }}>
+              <div style={{ padding: '8px 8px' }}>{col.title}</div>
+            </th>
+          ))}
+          <th style={{ borderBottom: `1px solid ${BORDER}`, width: 32, background: '#FFFFFF' }} />
+        </tr>
+      )}
+
+      {!collapsed && items.map(item => (
+        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={color}
+          selected={selectedIds.has(item.id)} onToggleSelect={() => onToggleSelect(item.id)}
+          onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
+      ))}
+
+      <tr><td colSpan={visibleCols.length + 3} style={{ height: 8 }} /></tr>
+    </tbody>
+  )
+}
+
 function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, hiddenCols, selectedIds, onToggleSelect, onSelectAll, userId, triggerAdd }: {
   group: MGroup; columns: MColumn[]; items: MItem[]; hiddenCols: Set<string>
   selectedIds: Set<string>; onToggleSelect: (id: string) => void; onSelectAll: (ids: string[]) => void
@@ -161,6 +211,14 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
   const [addingGroup, setAddingGroup] = useState(false)
   const [newGroupTitle, setNewGroupTitle] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [filterPerson, setFilterPerson] = useState<string[]>([])
+  const [filterMembers, setFilterMembers] = useState<{id: string; name: string; initials: string; color: string}[]>([])
+
+  useEffect(() => {
+    if (!userId) return
+    fetch('/monday/api/members', { headers: { 'X-Pm-User-Id': userId } })
+      .then(r => r.json()).then(setFilterMembers).catch(() => {})
+  }, [userId])
 
   const statusCols = columns.filter(c => c.type === 'status')
   const allStatusValues = Array.from(new Set(statusCols.flatMap(sc => {
@@ -174,6 +232,11 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
 
   if (filterStatus.length > 0) {
     filtered = filtered.filter(it => statusCols.some(sc => filterStatus.includes(String(it.data[sc.id] ?? ''))))
+  }
+
+  const personCol = columns.find(c => c.type === 'person')
+  if (filterPerson.length > 0 && personCol) {
+    filtered = filtered.filter(it => filterPerson.some(pid => String(it.data[personCol.id] ?? '').split(',').includes(pid)))
   }
 
   if (sortColId) {
@@ -194,7 +257,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
   const handleSelectAll = (ids: string[]) => setSelectedIds(ids.length === 0 ? new Set() : new Set(ids))
   const bulkDelete = () => { selectedIds.forEach(id => onDeleteItem(id)); setSelectedIds(new Set()) }
   const confirmAddGroup = () => { if (newGroupTitle.trim()) onAddGroup(newGroupTitle.trim()); setNewGroupTitle(''); setAddingGroup(false) }
-  const activeFilterCount = filterStatus.length + (sortColId ? 1 : 0) + hiddenCols.size
+  const activeFilterCount = filterStatus.length + filterPerson.length + (sortColId ? 1 : 0) + hiddenCols.size
   const visibleCols = columns.filter(c => !hiddenCols.has(c.id))
 
   const toolBtn = (active: boolean): React.CSSProperties => ({
@@ -243,8 +306,8 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
 
         {/* Filter */}
         <div style={{ position: 'relative' }}>
-          <button style={toolBtn(showFilter || filterStatus.length > 0)} onClick={() => { setShowFilter(v => !v); setShowSort(false); setShowHide(false) }}>
-            Filter {filterStatus.length > 0 && <span style={{ background: GOLD, color: '#FFFFFF', fontSize: 9, borderRadius: 99, width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{filterStatus.length}</span>}
+          <button style={toolBtn(showFilter || filterStatus.length > 0 || filterPerson.length > 0)} onClick={() => { setShowFilter(v => !v); setShowSort(false); setShowHide(false) }}>
+            Filter {(filterStatus.length + filterPerson.length) > 0 && <span style={{ background: GOLD, color: '#FFFFFF', fontSize: 9, borderRadius: 99, width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{filterStatus.length + filterPerson.length}</span>}
           </button>
           {showFilter && (
             <div style={dropdownStyle}>
@@ -268,8 +331,22 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                   </div>
                 )
               })}
-              {filterStatus.length > 0 && (
-                <button onClick={() => setFilterStatus([])} style={{ ...dropdownItem(), color: '#c0392b', borderTop: `1px solid #E8E8E4`, marginTop: 4 }}>Clear filters</button>
+              {filterMembers.length > 0 && personCol && (
+                <div>
+                  <div style={{ borderTop: `1px solid #E8E8E4`, margin: '4px 0' }} />
+                  <div style={{ padding: '6px 14px 4px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Assignee</div>
+                  {filterMembers.map(m => (
+                    <button key={m.id} onClick={() => setFilterPerson(prev => prev.includes(m.id) ? prev.filter(x => x !== m.id) : [...prev, m.id])} style={dropdownItem(filterPerson.includes(m.id))}>
+                      <div style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${filterPerson.includes(m.id) ? GOLD : '#333'}`, background: filterPerson.includes(m.id) ? GOLD : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {filterPerson.includes(m.id) && <span style={{ color: '#FFFFFF', fontSize: 8, fontWeight: 900 }}>✓</span>}
+                      </div>
+                      {m.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {(filterStatus.length > 0 || filterPerson.length > 0) && (
+                <button onClick={() => { setFilterStatus([]); setFilterPerson([]) }} style={{ ...dropdownItem(), color: '#c0392b', borderTop: `1px solid #E8E8E4`, marginTop: 4 }}>Clear filters</button>
               )}
             </div>
           )}
@@ -335,7 +412,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
         </div>
 
         {activeFilterCount > 0 && (
-          <button onClick={() => { setFilterStatus([]); setSortColId(null); setHiddenCols(new Set()) }}
+          <button onClick={() => { setFilterStatus([]); setFilterPerson([]); setSortColId(null); setHiddenCols(new Set()) }}
             style={{ fontSize: 11, color: '#c0392b', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}>
             Clear all ({activeFilterCount})
           </button>
@@ -392,7 +469,24 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
               </tr>
             </tbody>
           </table>
-        ) : (
+        ) : groupMode === 'status' || groupMode === 'priority' || groupMode === 'phase' ? (() => {
+          const dynCol = columns.find(c => c.type === 'status' && c.title.toLowerCase().includes(groupMode === 'status' ? 'status' : groupMode))
+          const colOpts = dynCol?.options as { values?: string[]; colors?: Record<string, string> } | undefined
+          const orderedVals = colOpts?.values ?? []
+          const allVals = Array.from(new Set([...orderedVals, ...filtered.map(it => String(it.data[dynCol?.id ?? ''] ?? '') || '(none)')]))
+          const dynGroups = allVals.map(val => ({
+            val,
+            color: colOpts?.colors?.[val] ?? '#CBD5E1',
+            items: filtered.filter(it => (String(it.data[dynCol?.id ?? ''] ?? '') || '(none)') === val),
+          })).filter(g => g.items.length > 0)
+          return (
+            <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              {dynGroups.map(dg => (
+                <DynGroupSection key={dg.val} label={dg.val} color={dg.color} items={dg.items} columns={columns} hiddenCols={hiddenCols} selectedIds={selectedIds} onToggleSelect={toggleSelect} onSelectAll={handleSelectAll} onUpdateItem={onUpdateItem} onDeleteItem={onDeleteItem} userId={userId} />
+              ))}
+            </table>
+          )
+        })() : (
           <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
             <thead>
               <tr style={{ background: '#FFFFFF' }}>

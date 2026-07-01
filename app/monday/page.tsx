@@ -79,17 +79,19 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
           const itemCount = data?.items.length ?? 0
           return (
             <button key={b.id} onClick={() => onSelectBoard(b.id)}
-              className="rounded-xl p-5 text-left transition-all group"
+              className="rounded-xl p-5 text-left transition-all"
               style={{ background: '#FFFFFF', border: '1px solid #E8E8E4' }}>
-              <div className="flex items-center gap-3 mb-3">
-                <div>
-                  <div className="font-semibold text-sm" style={{ color: '#1A1A18' }}>{b.title}</div>
-                  <div className="text-xs" style={{ color: '#9A9A92' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
-                </div>
-                <span className="ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: GOLD }}>Open →</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#1A1A18' }}>{b.title}</div>
+                <div style={{ fontSize: 11, color: '#9A9A92' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
               </div>
+              {data && data.items.slice(0, 3).map(it => (
+                <div key={it.id} style={{ fontSize: 11, color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>
+                  · {it.title || 'Untitled'}
+                </div>
+              ))}
               {data && (
-                <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden" style={{ background: '#E8E8E4' }}>
+                <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden" style={{ background: '#E8E8E4', marginTop: 8 }}>
                   {Object.entries(data.items.reduce((acc, it) => {
                     const sc = data.columns.find(c => c.type === 'status')
                     const val = sc ? String(it.data[sc.id] ?? '') : ''
@@ -102,6 +104,7 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
                   })}
                 </div>
               )}
+              <div style={{ fontSize: 10, color: '#9A9A92', marginTop: 6, textAlign: 'right' }}>Open →</div>
             </button>
           )
         })}
@@ -133,9 +136,10 @@ function MyWorkView({ allBoardData, myMemberId }: { allBoardData: Record<string,
       </div>
 
       {myItems.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '64px 0', color: '#D0D0CC' }}>
-          <div style={{ fontSize: 28, marginBottom: 12 }}>◈</div>
-          <p style={{ margin: 0 }}>No items assigned to you yet</p>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: '#9A9A92' }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>◈</div>
+          <p style={{ margin: '0 0 6px', fontWeight: 500, color: '#1A1A18', fontSize: 14 }}>No items assigned to you yet</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#9A9A92', maxWidth: 320, lineHeight: 1.5 }}>Open any board, click the PM column on a row, and select your name to assign items to yourself.</p>
         </div>
       ) : (
         <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
@@ -154,7 +158,12 @@ function MyWorkView({ allBoardData, myMemberId }: { allBoardData: Record<string,
                 <div style={{ fontSize: 12, color: '#1A1A18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 16 }}>{item.title || 'Untitled'}</div>
                 <div style={{ fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.boardTitle}</div>
                 <div>
-                  {status && <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 3, backgroundColor: statusColor, color: '#fff', letterSpacing: '0.04em' }}>{status}</span>}
+                  {status && (() => {
+                    const h = statusColor.replace('#', '')
+                    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16)
+                    const isLight = (r*299+g*587+b*114)/1000 > 160
+                    return <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 3, backgroundColor: statusColor, color: isLight ? '#374151' : '#fff', letterSpacing: '0.04em' }}>{status}</span>
+                  })()}
                 </div>
               </div>
             )
@@ -300,6 +309,7 @@ export default function PMSystemPage() {
   const [showAuth, setShowAuth] = useState(false)
   const [memberCount, setMemberCount] = useState(0)
   const [userId, setUserId] = useState<string>('')
+  const [savedToast, setSavedToast] = useState(false)
 
   // Check auth state on mount
   useEffect(() => {
@@ -401,6 +411,8 @@ export default function PMSystemPage() {
     })
     const updated = await res.json()
     setBoardData(prev => prev ? { ...prev, items: prev.items.map(it => it.id === itemId ? updated : it) } : prev)
+    setSavedToast(true)
+    setTimeout(() => setSavedToast(false), 1800)
   }
 
   const deleteItem = async (itemId: string) => {
@@ -438,6 +450,11 @@ export default function PMSystemPage() {
   return (
     <div className="flex flex-col h-full">
       <MondayTopBar />
+      {savedToast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100, background: '#1A1A18', color: '#FFFFFF', fontSize: 12, fontWeight: 500, padding: '8px 16px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.04em' }}>
+          <span style={{ color: '#4ADE80' }}>✓</span> Saved
+        </div>
+      )}
       <div className="flex flex-1 overflow-hidden">
         <MondaySidebar
           boards={boards}
