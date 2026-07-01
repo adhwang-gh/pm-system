@@ -14,6 +14,7 @@ interface Props {
   activeNav: NavView
   collapsed: boolean
   onToggleCollapse: () => void
+  userName?: string | null
 }
 
 const NAV: { icon: string; label: string; view: NavView }[] = [
@@ -34,7 +35,7 @@ const FAINT = '#C0C0BC'
 const JOST: React.CSSProperties = { fontFamily: "'Jost', sans-serif" }
 const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" }
 
-export default function MondaySidebar({ boards, selectedBoardId, onSelectBoard, onNewBoard, onNavSelect, activeNav, collapsed, onToggleCollapse }: Props) {
+export default function MondaySidebar({ boards, selectedBoardId, onSelectBoard, onNewBoard, onNavSelect, activeNav, collapsed, onToggleCollapse, userName }: Props) {
   const [workspaceOpen, setWorkspaceOpen] = useState(true)
   const [showNewBoard, setShowNewBoard] = useState(false)
   const [newBoardTitle, setNewBoardTitle] = useState('')
@@ -128,10 +129,12 @@ export default function MondaySidebar({ boards, selectedBoardId, onSelectBoard, 
       {/* Bottom */}
       <div style={{ borderTop: `1px solid ${BORDER}`, padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: 10, fontWeight: 700, ...JOST }}>AH</div>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: 10, fontWeight: 700, ...JOST }}>
+            {userName ? userName.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').join('').slice(0, 2) || '?' : '?'}
+          </div>
           <div>
-            <div style={{ fontSize: 12, color: TEXT, fontWeight: 500, ...JOST }}>Addison Hwang</div>
-            <div style={{ fontSize: 10, color: MUTED, ...MONO }}>Admin</div>
+            <div style={{ fontSize: 12, color: TEXT, fontWeight: 500, ...JOST }}>{userName || 'User'}</div>
+            <div style={{ fontSize: 10, color: MUTED, ...MONO }}>Member</div>
           </div>
         </div>
       </div>

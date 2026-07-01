@@ -448,6 +448,7 @@ export default function PMSystemPage() {
           activeNav={activeNav}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(v => !v)}
+          userName={userName}
         />
 
         <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#F7F7F5' }}>

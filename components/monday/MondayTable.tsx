@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MColumn, MGroup, MItem } from './types'
 import MondayCell from './MondayCell'
 
@@ -26,16 +26,18 @@ interface Props {
 
 type SortDir = 'asc' | 'desc'
 
-function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, hiddenCols, selectedIds, onToggleSelect, onSelectAll, userId }: {
+function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAddItem, onToggle, hiddenCols, selectedIds, onToggleSelect, onSelectAll, userId, triggerAdd }: {
   group: MGroup; columns: MColumn[]; items: MItem[]; hiddenCols: Set<string>
   selectedIds: Set<string>; onToggleSelect: (id: string) => void; onSelectAll: (ids: string[]) => void
   onUpdateItem: (itemId: string, title?: string, data?: Record<string, string | number>) => void
   onDeleteItem: (itemId: string) => void; onAddItem: (title: string) => void; onToggle: (collapsed: boolean) => void
-  userId?: string
+  userId?: string; triggerAdd?: number
 }) {
   const [collapsed, setCollapsed] = useState(group.collapsed === 1)
   const [addingItem, setAddingItem] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+
+  useEffect(() => { if (triggerAdd) { setCollapsed(false); setAddingItem(true) } }, [triggerAdd])
   const visibleCols = columns.filter(c => !hiddenCols.has(c.id))
   const allSelected = items.length > 0 && items.every(it => selectedIds.has(it.id))
 
@@ -164,7 +166,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
             onKeyDown={e => { if (e.key === 'Enter') { onUpdateItem(item.id, e.currentTarget.value); setEditingTitle(false) } if (e.key === 'Escape') setEditingTitle(false) }}
             style={{ width: '100%', padding: '8px 12px', fontSize: 13, outline: 'none', border: `1px solid ${GOLD}`, borderRadius: 10, background: '#F3F3F0', color: TEXT }} />
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }} onClick={() => setEditingTitle(true)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }} onDoubleClick={() => setEditingTitle(true)}>
             <span style={{ fontSize: 13, color: TEXT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title || 'Untitled'}</span>
             {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
           </div>
@@ -189,7 +191,9 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
   const [filterStatus, setFilterStatus] = useState<string[]>([])
   const [sortColId, setSortColId] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<SortDir>('asc')
-  const [groupMode, setGroupMode] = useState<'group' | 'flat'>('group')
+  const [groupMode, setGroupMode] = useState<'group' | 'flat' | 'status' | 'priority' | 'phase'>('group')
+  const [showGroupBy, setShowGroupBy] = useState(false)
+  const [addTrigger, setAddTrigger] = useState(0)
   const [addingGroup, setAddingGroup] = useState(false)
   const [newGroupTitle, setNewGroupTitle] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -259,7 +263,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
 
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderBottom: `1px solid ${BORDER}`, background: SURFACE, flexShrink: 0, flexWrap: 'wrap' }}>
-        <button onClick={() => onAddItem(groups[0]?.id ?? '', 'New project')}
+        <button onClick={() => setAddTrigger(n => n + 1)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: GOLD, color: '#FFFFFF', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
           + New project
         </button>
@@ -280,17 +284,26 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
           </button>
           {showFilter && (
             <div style={dropdownStyle}>
-              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #E8E8E4`, marginBottom: 4 }}>Filter by status</div>
-              {allStatusValues.length === 0 ? (
-                <div style={{ padding: '8px 14px', fontSize: 12, color: '#6B7280' }}>No status values found</div>
-              ) : allStatusValues.map(val => (
-                <button key={val} onClick={() => toggleFilterStatus(val)} style={dropdownItem(filterStatus.includes(val))}>
-                  <div style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${filterStatus.includes(val) ? GOLD : '#333'}`, background: filterStatus.includes(val) ? GOLD : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {filterStatus.includes(val) && <span style={{ color: '#FFFFFF', fontSize: 8, fontWeight: 900 }}>✓</span>}
+              {statusCols.length === 0 ? (
+                <div style={{ padding: '8px 14px', fontSize: 12, color: '#6B7280' }}>No status columns found</div>
+              ) : statusCols.map((sc, si) => {
+                const opts = sc.options as { values?: string[] }
+                const vals = opts?.values ?? []
+                return (
+                  <div key={sc.id}>
+                    {si > 0 && <div style={{ borderTop: `1px solid #E8E8E4`, margin: '4px 0' }} />}
+                    <div style={{ padding: '6px 14px 4px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{sc.title}</div>
+                    {vals.map(val => (
+                      <button key={val} onClick={() => toggleFilterStatus(val)} style={dropdownItem(filterStatus.includes(val))}>
+                        <div style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${filterStatus.includes(val) ? GOLD : '#333'}`, background: filterStatus.includes(val) ? GOLD : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {filterStatus.includes(val) && <span style={{ color: '#FFFFFF', fontSize: 8, fontWeight: 900 }}>✓</span>}
+                        </div>
+                        {val}
+                      </button>
+                    ))}
                   </div>
-                  {val}
-                </button>
-              ))}
+                )
+              })}
               {filterStatus.length > 0 && (
                 <button onClick={() => setFilterStatus([])} style={{ ...dropdownItem(), color: '#c0392b', borderTop: `1px solid #E8E8E4`, marginTop: 4 }}>Clear filters</button>
               )}
@@ -340,9 +353,22 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
           )}
         </div>
 
-        <button style={toolBtn(groupMode === 'flat')} onClick={() => setGroupMode(m => m === 'group' ? 'flat' : 'group')}>
-          {groupMode === 'group' ? 'Group by' : 'Flat ✓'}
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button style={toolBtn(showGroupBy || groupMode !== 'group')} onClick={() => { setShowGroupBy(v => !v); setShowFilter(false); setShowSort(false); setShowHide(false) }}>
+            Group by{groupMode !== 'group' ? `: ${groupMode.charAt(0).toUpperCase() + groupMode.slice(1)}` : ''}
+          </button>
+          {showGroupBy && (
+            <div style={dropdownStyle}>
+              <div style={{ padding: '4px 14px 8px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: `1px solid #E8E8E4`, marginBottom: 4 }}>Group by</div>
+              {(['group', 'flat', 'status', 'priority', 'phase'] as const).map(m => (
+                <button key={m} onClick={() => { setGroupMode(m); setShowGroupBy(false) }} style={dropdownItem(groupMode === m)}>
+                  {m === 'group' ? 'None (default)' : m.charAt(0).toUpperCase() + m.slice(1)}
+                  {groupMode === m && <span style={{ marginLeft: 'auto', color: GOLD }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {activeFilterCount > 0 && (
           <button onClick={() => { setFilterStatus([]); setSortColId(null); setHiddenCols(new Set()) }}
@@ -352,8 +378,8 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
         )}
       </div>
 
-      {(showFilter || showSort || showHide) && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setShowFilter(false); setShowSort(false); setShowHide(false) }} />
+      {(showFilter || showSort || showHide || showGroupBy) && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => { setShowFilter(false); setShowSort(false); setShowHide(false); setShowGroupBy(false) }} />
       )}
 
       {/* Table */}
@@ -369,7 +395,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
           </div>
         ) : groupMode === 'group' ? (
           <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-            {groups.map(group => {
+            {groups.map((group, gi) => {
               const groupItems = filtered.filter(it => it.group_id === group.id)
               return (
                 <GroupSection key={group.id} group={group} columns={columns} items={groupItems} hiddenCols={hiddenCols}
@@ -377,7 +403,8 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                   onSelectAll={(ids) => handleSelectAll(ids)}
                   onUpdateItem={onUpdateItem} onDeleteItem={onDeleteItem}
                   onAddItem={(title) => onAddItem(group.id, title)}
-                  onToggle={(c) => onToggleGroup(group.id, c)} userId={userId} />
+                  onToggle={(c) => onToggleGroup(group.id, c)} userId={userId}
+                  triggerAdd={gi === 0 ? addTrigger : undefined} />
               )
             })}
             <tbody>
