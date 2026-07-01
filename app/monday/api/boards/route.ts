@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getTurso, toRows } from '@/lib/tursoClient'
-import { initMondaySchema, seedForUser } from '@/lib/mondayDb'
+import { initMondaySchema, seedForUser, migrateColorsAndCleanup } from '@/lib/mondayDb'
 import { randomUUID } from 'crypto'
 
 function getUserId(req: Request): string {
@@ -11,6 +11,7 @@ export async function GET(req: Request) {
   await initMondaySchema()
   const userId = getUserId(req)
   await seedForUser(userId)
+  await migrateColorsAndCleanup(userId)
   const turso = getTurso()
   const res = await turso.execute({ sql: 'SELECT * FROM monday_boards WHERE user_id = ? ORDER BY created_at ASC', args: [userId] })
   return NextResponse.json(toRows(res.rows))
@@ -27,9 +28,9 @@ export async function POST(req: Request) {
   const cols = [
     { id: randomUUID(), title: 'PM', type: 'person', width: 60, options: '[]' },
     { id: randomUUID(), title: 'Overview', type: 'text', width: 220, options: '[]' },
-    { id: randomUUID(), title: 'Project status', type: 'status', width: 180, options: JSON.stringify({ values: ['On track', "Haven't started yet", 'At risk', 'Stuck', 'Done'], colors: { 'On track': '#C9A24B', "Haven't started yet": '#52504C', 'At risk': '#9C7C32', 'Stuck': '#B0221B', 'Done': '#C9A24B' } }) },
-    { id: randomUUID(), title: 'Priority', type: 'status', width: 140, options: JSON.stringify({ values: ['High', 'Medium', 'Low', 'Critical'], colors: { High: '#C9A24B', Medium: '#9C7C32', Low: '#52504C', Critical: '#B0221B' } }) },
-    { id: randomUUID(), title: 'Phase', type: 'status', width: 140, options: JSON.stringify({ values: ['Upcoming', 'Ongoing', 'Completed', 'Planning'], colors: { Upcoming: '#52504C', Ongoing: '#9C7C32', Completed: '#C9A24B', Planning: '#8A8478' } }) },
+    { id: randomUUID(), title: 'Project status', type: 'status', width: 180, options: JSON.stringify({ values: ['On track', "Haven't started yet", 'At risk', 'Stuck', 'Done'], colors: { 'On track': '#4ADE80', "Haven't started yet": '#CBD5E1', 'At risk': '#F59E0B', 'Stuck': '#EF4444', 'Done': '#22C55E' } }) },
+    { id: randomUUID(), title: 'Priority', type: 'status', width: 140, options: JSON.stringify({ values: ['High', 'Medium', 'Low', 'Critical'], colors: { High: '#EF4444', Medium: '#F59E0B', Low: '#60A5FA', Critical: '#DC2626' } }) },
+    { id: randomUUID(), title: 'Phase', type: 'status', width: 140, options: JSON.stringify({ values: ['Upcoming', 'Ongoing', 'Completed', 'Planning'], colors: { Upcoming: '#94A3B8', Ongoing: '#3B82F6', Completed: '#22C55E', Planning: '#A78BFA' } }) },
     { id: randomUUID(), title: 'Timeline', type: 'timeline', width: 160, options: '[]' },
   ]
   for (let i = 0; i < cols.length; i++) {
@@ -39,9 +40,9 @@ export async function POST(req: Request) {
   const [pmCol, overviewCol, statusCol, priorityCol, phaseCol, timelineCol] = cols
 
   const groups = [
-    { id: randomUUID(), title: 'Upcoming', color: '#52504C', position: 0 },
-    { id: randomUUID(), title: 'In Progress', color: '#9C7C32', position: 1 },
-    { id: randomUUID(), title: 'Completed', color: '#C9A24B', position: 2 },
+    { id: randomUUID(), title: 'Upcoming', color: '#6366F1', position: 0 },
+    { id: randomUUID(), title: 'In Progress', color: '#3B82F6', position: 1 },
+    { id: randomUUID(), title: 'Completed', color: '#22C55E', position: 2 },
   ]
   for (const g of groups) {
     await turso.execute({ sql: 'INSERT INTO monday_groups (id, board_id, title, color, position) VALUES (?, ?, ?, ?, ?)', args: [g.id, boardId, g.title, g.color, g.position] })

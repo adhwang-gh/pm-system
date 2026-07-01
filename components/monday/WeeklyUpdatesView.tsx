@@ -166,7 +166,7 @@ export default function WeeklyUpdatesView({ userId }: { userId?: string }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 12, color: '#6B7280' }}>{submitted}/{members.length} submitted</span>
-            <div style={{ width: 80, height: 4, background: '#222', borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ width: 80, height: 4, background: '#E8E8E4', borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ width: `${members.length ? (submitted / members.length) * 100 : 0}%`, height: '100%', background: GOLD, borderRadius: 10, transition: 'width 0.3s' }} />
             </div>
           </div>

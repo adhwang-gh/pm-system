@@ -101,42 +101,6 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
         </tr>
       )}
 
-      {!collapsed && (
-        <tr style={{ background: '#FAFAF8' }}>
-          <td style={{ borderLeft: `3px solid ${group.color}`, borderBottom: `1px solid ${BORDER}`, width: 32 }} />
-          <td style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, padding: '6px 12px' }}>
-            <div style={{ display: 'flex', gap: 2, height: 16 }}>
-              {Object.entries(items.reduce((acc, item) => {
-                const sc = columns.find(c => c.type === 'status' && c.title === 'Project status')
-                const val = sc ? String(item.data[sc.id] ?? '') : ''
-                if (val) acc[val] = (acc[val] ?? 0) + 1
-                return acc
-              }, {} as Record<string, number>)).map(([status, count]) => {
-                const sc = columns.find(c => c.type === 'status' && c.title === 'Project status')
-                const opts = sc?.options as { colors?: Record<string, string> }
-                return <div key={status} style={{ height: '100%', borderRadius: 2, backgroundColor: opts?.colors?.[status] ?? '#333', flex: count }} title={`${status}: ${count}`} />
-              })}
-            </div>
-          </td>
-          {visibleCols.map(col => (
-            <td key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, padding: '6px 8px' }}>
-              {col.type === 'status' && (
-                <div style={{ display: 'flex', gap: 2, height: 16 }}>
-                  {Object.entries(items.reduce((acc, item) => {
-                    const val = String(item.data[col.id] ?? '')
-                    if (val) acc[val] = (acc[val] ?? 0) + 1
-                    return acc
-                  }, {} as Record<string, number>)).map(([v, count]) => {
-                    const opts = col.options as { colors?: Record<string, string> }
-                    return <div key={v} style={{ height: '100%', borderRadius: 2, backgroundColor: opts?.colors?.[v] ?? '#333', flex: count }} title={`${v}: ${count}`} />
-                  })}
-                </div>
-              )}
-            </td>
-          ))}
-          <td style={{ borderBottom: `1px solid ${BORDER}` }} />
-        </tr>
-      )}
       <tr><td colSpan={visibleCols.length + 3} style={{ height: 8 }} /></tr>
     </tbody>
   )

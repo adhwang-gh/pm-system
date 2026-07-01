@@ -115,6 +115,69 @@ export async function initMondaySchema() {
   _initialized = true
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  'Done': '#22C55E',
+  'On track': '#4ADE80',
+  'At risk': '#F59E0B',
+  'Stuck': '#EF4444',
+  "Haven't started yet": '#CBD5E1',
+  'High': '#EF4444',
+  'Medium': '#F59E0B',
+  'Low': '#60A5FA',
+  'Critical': '#DC2626',
+  'Upcoming': '#94A3B8',
+  'Ongoing': '#3B82F6',
+  'Completed': '#22C55E',
+  'Planning': '#A78BFA',
+}
+
+export async function migrateColorsAndCleanup(userId: string) {
+  const turso = getTurso()
+
+  // Delete ghost "New project" rows that were auto-created by the old button
+  await turso.execute({ sql: "DELETE FROM monday_items WHERE title = 'New project' AND (data = '{}' OR data = '')", args: [] })
+
+  // Ensure user exists in pm_members (handles users who registered before the fix)
+  const userRes = await turso.execute({ sql: 'SELECT * FROM pm_users WHERE user_id = ?', args: [userId] })
+  const user = userRes.rows[0]
+  if (user) {
+    const name = String(user.name)
+    const initials = name.trim().split(/\s+/).map((w: string) => w[0]?.toUpperCase() ?? '').join('').slice(0, 2) || '?'
+    await turso.execute({
+      sql: 'INSERT OR IGNORE INTO pm_members (id, user_id, name, initials, color) VALUES (?, ?, ?, ?, ?)',
+      args: [userId, userId, name, initials, '#3D5A80'],
+    })
+  }
+
+  // Update status column colors for all boards belonging to this user
+  const boardsRes = await turso.execute({ sql: 'SELECT id FROM monday_boards WHERE user_id = ?', args: [userId] })
+  for (const board of boardsRes.rows) {
+    const colsRes = await turso.execute({ sql: "SELECT * FROM monday_columns WHERE board_id = ? AND type = 'status'", args: [board.id] })
+    for (const col of colsRes.rows) {
+      try {
+        const opts = JSON.parse(String(col.options ?? '{}')) as { values?: string[]; colors?: Record<string, string> }
+        const values = opts.values ?? []
+        const newColors: Record<string, string> = {}
+        for (const v of values) newColors[v] = STATUS_COLORS[v] ?? opts.colors?.[v] ?? '#94A3B8'
+        await turso.execute({ sql: 'UPDATE monday_columns SET options = ? WHERE id = ?', args: [JSON.stringify({ ...opts, colors: newColors }), col.id] })
+      } catch {}
+    }
+    // Update group colors to match new scheme
+    const groupsRes = await turso.execute({ sql: 'SELECT * FROM monday_groups WHERE board_id = ?', args: [board.id] })
+    for (const g of groupsRes.rows) {
+      const title = String(g.title ?? '').toLowerCase()
+      let color = String(g.color ?? '')
+      if (['#52504c', '#9c7c32', '#c9a24b', '#8a8478', '#b0221b'].includes(color.toLowerCase())) {
+        if (title.includes('upcom') || title.includes('plan')) color = '#6366F1'
+        else if (title.includes('ongo') || title.includes('progress') || title.includes('active')) color = '#3B82F6'
+        else if (title.includes('done') || title.includes('complet')) color = '#22C55E'
+        else color = '#94A3B8'
+        await turso.execute({ sql: 'UPDATE monday_groups SET color = ? WHERE id = ?', args: [color, g.id] })
+      }
+    }
+  }
+}
+
 export async function seedForUser(userId: string) {
   const turso = getTurso()
   const res = await turso.execute({ sql: 'SELECT COUNT(*) as c FROM monday_boards WHERE user_id = ?', args: [userId] })
@@ -125,10 +188,10 @@ export async function seedForUser(userId: string) {
 
   const cols = [
     { id: randomUUID(), title: 'PM', type: 'person', width: 60, options: '[]' },
-    { id: randomUUID(), title: 'Overview', type: 'text', width: 220, options: '[]' },
-    { id: randomUUID(), title: 'Project status', type: 'status', width: 180, options: JSON.stringify({ values: ['On track', "Haven't started yet", 'At risk', 'Stuck', 'Done'], colors: { 'On track': '#C9A24B', "Haven't started yet": '#52504C', 'At risk': '#9C7C32', 'Stuck': '#B0221B', 'Done': '#C9A24B' } }) },
-    { id: randomUUID(), title: 'Priority', type: 'status', width: 140, options: JSON.stringify({ values: ['High', 'Medium', 'Low', 'Critical'], colors: { High: '#C9A24B', Medium: '#9C7C32', Low: '#52504C', Critical: '#B0221B' } }) },
-    { id: randomUUID(), title: 'Phase', type: 'status', width: 140, options: JSON.stringify({ values: ['Upcoming', 'Ongoing', 'Completed', 'Planning'], colors: { Upcoming: '#52504C', Ongoing: '#9C7C32', Completed: '#C9A24B', Planning: '#8A8478' } }) },
+    { id: randomUUID(), title: 'Overview', type: 'text', width: 260, options: '[]' },
+    { id: randomUUID(), title: 'Project status', type: 'status', width: 180, options: JSON.stringify({ values: ['On track', "Haven't started yet", 'At risk', 'Stuck', 'Done'], colors: { 'On track': '#4ADE80', "Haven't started yet": '#CBD5E1', 'At risk': '#F59E0B', 'Stuck': '#EF4444', 'Done': '#22C55E' } }) },
+    { id: randomUUID(), title: 'Priority', type: 'status', width: 140, options: JSON.stringify({ values: ['High', 'Medium', 'Low', 'Critical'], colors: { High: '#EF4444', Medium: '#F59E0B', Low: '#60A5FA', Critical: '#DC2626' } }) },
+    { id: randomUUID(), title: 'Phase', type: 'status', width: 140, options: JSON.stringify({ values: ['Upcoming', 'Ongoing', 'Completed', 'Planning'], colors: { Upcoming: '#94A3B8', Ongoing: '#3B82F6', Completed: '#22C55E', Planning: '#A78BFA' } }) },
     { id: randomUUID(), title: 'Timeline', type: 'timeline', width: 160, options: '[]' },
   ]
   for (let i = 0; i < cols.length; i++) {
@@ -138,9 +201,9 @@ export async function seedForUser(userId: string) {
   const [pmCol, overviewCol, statusCol, priorityCol, phaseCol, timelineCol] = cols
 
   const groups = [
-    { id: randomUUID(), title: 'Upcoming projects', color: '#52504C', position: 0 },
-    { id: randomUUID(), title: 'Ongoing projects', color: '#9C7C32', position: 1 },
-    { id: randomUUID(), title: 'Completed projects', color: '#C9A24B', position: 2 },
+    { id: randomUUID(), title: 'Upcoming projects', color: '#6366F1', position: 0 },
+    { id: randomUUID(), title: 'Ongoing projects', color: '#3B82F6', position: 1 },
+    { id: randomUUID(), title: 'Completed projects', color: '#22C55E', position: 2 },
   ]
   for (const g of groups) {
     await turso.execute({ sql: 'INSERT INTO monday_groups (id, board_id, title, color, position) VALUES (?, ?, ?, ?, ?)', args: [g.id, boardId, g.title, g.color, g.position] })

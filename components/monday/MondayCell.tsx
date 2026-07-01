@@ -10,6 +10,15 @@ const BORDER = '#DDDDD8'
 const TEXT = '#1A1A18'
 const MUTED = '#9A9A92'
 
+function isLightColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  if (h.length < 6) return false
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 > 160
+}
+
 export interface PMember {
   id: string
   name: string
@@ -74,7 +83,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <button onClick={() => setShowPicker(v => !v)}
-          style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: color, color: str ? '#fff' : MUTED, letterSpacing: '0.06em', transition: 'opacity 0.1s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingLeft: 6, paddingRight: 6 }}>
+          style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: color, color: str ? (isLightColor(color) ? '#374151' : '#fff') : MUTED, letterSpacing: '0.06em', transition: 'opacity 0.1s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingLeft: 6, paddingRight: 6 }}>
           {str || '—'}
         </button>
         {showPicker && (
@@ -259,8 +268,8 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
   }
 
   return (
-    <div onClick={() => setEditing(true)}
-      style={{ height: 36, padding: '0 8px', display: 'flex', alignItems: 'center', fontSize: 12, color: str ? TEXT : '#333', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    <div onClick={() => setEditing(true)} title={str || undefined}
+      style={{ height: 36, padding: '0 8px', display: 'flex', alignItems: 'center', fontSize: 12, color: str ? TEXT : '#B0B0AA', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
       {str || '—'}
     </div>
   )

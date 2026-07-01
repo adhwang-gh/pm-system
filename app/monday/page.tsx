@@ -83,13 +83,13 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
               style={{ background: '#FFFFFF', border: '1px solid #E8E8E4' }}>
               <div className="flex items-center gap-3 mb-3">
                 <div>
-                  <div className="font-semibold text-sm" style={{ color: '#D0D0D0' }}>{b.title}</div>
-                  <div className="text-xs" style={{ color: '#D0D0CC' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
+                  <div className="font-semibold text-sm" style={{ color: '#1A1A18' }}>{b.title}</div>
+                  <div className="text-xs" style={{ color: '#9A9A92' }}>{itemCount} item{itemCount !== 1 ? 's' : ''}</div>
                 </div>
                 <span className="ml-auto text-sm opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: GOLD }}>Open →</span>
               </div>
               {data && (
-                <div className="flex gap-0.5 h-1 rounded-full overflow-hidden" style={{ background: '#222' }}>
+                <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden" style={{ background: '#E8E8E4' }}>
                   {Object.entries(data.items.reduce((acc, it) => {
                     const sc = data.columns.find(c => c.type === 'status')
                     const val = sc ? String(it.data[sc.id] ?? '') : ''
@@ -188,7 +188,7 @@ function InboxView() {
           <div style={{ fontSize: 11, color: MUTED }}>{unread} unread notification{unread !== 1 ? 's' : ''}</div>
         </div>
         {unread > 0 && (
-          <button onClick={markAllRead} style={{ fontSize: 11, color: GOLD, background: 'none', border: `1px solid ${GOLD}44`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', letterSpacing: '0.06em' }}>
+          <button onClick={e => { e.stopPropagation(); markAllRead() }} style={{ fontSize: 11, color: GOLD, background: 'none', border: `1px solid ${GOLD}44`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', letterSpacing: '0.06em' }}>
             Mark all read
           </button>
         )}
