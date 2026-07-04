@@ -13,6 +13,10 @@ const MUTED = '#9A9A92'
 const GROUP_ACCENT = '#6366f1'
 const SANS = "system-ui, -apple-system, 'Inter', sans-serif"
 
+function groupBorderColor(title: string): string {
+  return title.toLowerCase().includes('complet') ? '#cbd5e1' : GROUP_ACCENT
+}
+
 interface Props {
   boardId: string
   groups: MGroup[]
@@ -74,7 +78,6 @@ function DynGroupSection({ label, color, items, columns, hiddenCols, selectedIds
           onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
       ))}
 
-      <tr><td colSpan={visibleCols.length + 3} style={{ height: 12 }} /></tr>
     </tbody>
   )
 }
@@ -102,7 +105,7 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
     <tbody>
       <tr>
         <td colSpan={visibleCols.length + 3} style={{ paddingTop: 16, paddingBottom: 0 }}>
-          <div onMouseEnter={() => setHeaderHovered(true)} onMouseLeave={() => setHeaderHovered(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${GROUP_ACCENT}` }}>
+          <div onMouseEnter={() => setHeaderHovered(true)} onMouseLeave={() => setHeaderHovered(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${groupBorderColor(group.title)}` }}>
             <button onClick={toggle} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, width: 14 }}>{collapsed ? '▸' : '▾'}</button>
             <span style={{ fontWeight: 500, fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{group.title}</span>
             <span style={{ fontSize: 10, color: MUTED, background: '#F3F3F0', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
@@ -116,7 +119,7 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
 
       {!collapsed && (
         <tr style={{ background: '#FFFFFF' }}>
-          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${GROUP_ACCENT}` }}>
+          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${groupBorderColor(group.title)}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
               <input type="checkbox" checked={allSelected} onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }} />
             </div>
@@ -132,14 +135,14 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
       )}
 
       {!collapsed && items.map(item => (
-        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={GROUP_ACCENT}
+        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={groupBorderColor(group.title)}
           selected={selectedIds.has(item.id)} onToggleSelect={() => onToggleSelect(item.id)}
           onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
       ))}
 
       {!collapsed && (
         <tr>
-          <td style={{ borderLeft: `3px solid ${GROUP_ACCENT}`, borderBottom: `1px solid ${BORDER}` }} />
+          <td style={{ borderLeft: `3px solid ${groupBorderColor(group.title)}`, borderBottom: `1px solid ${BORDER}` }} />
           <td style={{ borderBottom: `1px solid ${BORDER}` }} colSpan={visibleCols.length + 2}>
             {addingItem ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px' }}>
@@ -159,7 +162,6 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
         </tr>
       )}
 
-      <tr><td colSpan={visibleCols.length + 3} style={{ height: 12 }} /></tr>
     </tbody>
   )
 }
@@ -190,7 +192,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }} onDoubleClick={() => setEditingTitle(true)}>
             <span style={{ fontSize: 13, color: TEXT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: SANS }}>{item.title || 'Untitled'}</span>
-            {hovered && <button onClick={e => { e.stopPropagation(); setEditingTitle(true) }} title="Edit title" style={{ color: '#9A9A92', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, flexShrink: 0, lineHeight: 1 }}>✎</button>}
+            <button onClick={e => { e.stopPropagation(); setEditingTitle(true) }} title="Edit title" style={{ color: '#9A9A92', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, flexShrink: 0, lineHeight: 1, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>✎</button>
             {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} title="Delete" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
           </div>
         )}

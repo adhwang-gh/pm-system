@@ -152,11 +152,15 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
       setShowAddInput(false)
     }
 
+    const [cellHovered, setCellHovered] = useState(false)
     return (
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 4px' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 4px' }}
+        onMouseEnter={() => setCellHovered(true)} onMouseLeave={() => setCellHovered(false)}>
         <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => { setEditing(v => !v); setSearch(''); setShowAddInput(false) }}>
           {selectedIds.length === 0 ? (
-            <button style={{ width: 26, height: 26, borderRadius: '50%', border: `1px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: MUTED, background: 'none', cursor: 'pointer' }}>+</button>
+            cellHovered
+              ? <button style={{ width: 26, height: 26, borderRadius: '50%', border: `1px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: MUTED, background: 'none', cursor: 'pointer' }}>+</button>
+              : <span style={{ fontSize: 11, color: '#cbd5e1' }}>Unassigned</span>
           ) : (
             <div style={{ display: 'flex' }}>
               {selectedIds.slice(0, 3).map((id, i) => {

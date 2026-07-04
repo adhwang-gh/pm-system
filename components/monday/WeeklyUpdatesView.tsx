@@ -115,7 +115,14 @@ function MemberCard({ member, update, isEditing, onEdit, onSave, onCancel, isMe 
             ))}
           </div>
         ) : (
-          <div style={{ fontSize: 12, color: '#374151', fontStyle: 'italic', padding: '8px 0' }}>No update submitted yet</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {fields.map(f => (
+              <div key={f.key}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>{f.label}</div>
+                <div style={{ fontSize: 12, color: '#cbd5e1', fontStyle: 'italic' }}>{f.placeholder}</div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

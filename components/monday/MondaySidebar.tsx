@@ -34,7 +34,6 @@ const MUTED = '#9A9A92'
 const FAINT = '#C0C0BC'
 
 const JOST: React.CSSProperties = { fontFamily: "'Jost', sans-serif" }
-const MONO: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" }
 
 export default function MondaySidebar({ boards, selectedBoardId, onSelectBoard, onNewBoard, onNavSelect, activeNav, collapsed, onToggleCollapse, userName, onProfileEdit }: Props) {
   const [workspaceOpen, setWorkspaceOpen] = useState(true)
@@ -86,7 +85,7 @@ export default function MondaySidebar({ boards, selectedBoardId, onSelectBoard, 
       {/* Boards */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }}>
         <button onClick={() => setWorkspaceOpen(v => !v)}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'none', border: 'none', cursor: 'pointer', color: FAINT, fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.12em', ...MONO }}>
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'none', border: 'none', cursor: 'pointer', color: FAINT, fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
           <span>{workspaceOpen ? '▾' : '▸'}</span>
           Workspaces
         </button>
@@ -135,7 +134,7 @@ export default function MondaySidebar({ boards, selectedBoardId, onSelectBoard, 
           </div>
           <div>
             <div style={{ fontSize: 12, color: TEXT, fontWeight: 500, ...JOST }}>{userName || 'User'}</div>
-            <div style={{ fontSize: 10, color: MUTED, ...MONO }}>Member · Edit profile</div>
+            <div style={{ fontSize: 10, color: MUTED }}>Member · Edit profile</div>
           </div>
         </button>
       </div>

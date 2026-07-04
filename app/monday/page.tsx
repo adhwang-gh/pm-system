@@ -55,14 +55,15 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { label: 'Total boards', value: boards.length },
-          { label: 'Total items', value: totalItems },
-          { label: 'Team members', value: memberCount },
+          { label: 'Total boards', value: boards.length, sub: 'in your workspace' },
+          { label: 'Total items', value: totalItems, sub: 'across all boards' },
+          { label: 'Team members', value: memberCount, sub: 'on your team' },
         ].map(s => (
-          <div key={s.label} className="rounded-xl p-5 flex items-center gap-4" style={{ background: '#FFFFFF', border: '1px solid #E8E8E4' }}>
+          <div key={s.label} className="rounded-xl flex items-center gap-4" style={{ background: '#FFFFFF', border: '1px solid #E8E8E4', padding: '14px 20px' }}>
             <div>
-              <div className="text-2xl font-bold" style={{ color: GOLD }}>{s.value}</div>
-              <div className="text-xs" style={{ color: '#6B7280' }}>{s.label}</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, color: GOLD, lineHeight: 1.1 }}>{s.value}</div>
+              <div style={{ fontSize: 11, fontWeight: 500, color: '#1A1A18', marginTop: 2 }}>{s.label}</div>
+              <div style={{ fontSize: 10, color: '#9A9A92', marginTop: 1 }}>{s.sub}</div>
             </div>
           </div>
         ))}
@@ -86,20 +87,37 @@ function HomeView({ boards, allBoardData, onSelectBoard, userName, memberCount }
                   · {it.title || 'Untitled'}
                 </div>
               ))}
-              {data && (
-                <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden" style={{ background: '#E8E8E4', marginTop: 8 }}>
-                  {Object.entries(data.items.reduce((acc, it) => {
-                    const sc = data.columns.find(c => c.type === 'status')
-                    const val = sc ? String(it.data[sc.id] ?? '') : ''
-                    if (val) acc[val] = (acc[val] ?? 0) + 1
-                    return acc
-                  }, {} as Record<string, number>)).map(([v, count]) => {
-                    const sc = data.columns.find(c => c.type === 'status')
-                    const opts = sc?.options as { colors?: Record<string, string> }
-                    return <div key={v} className="h-full" style={{ backgroundColor: opts?.colors?.[v] ?? '#333', flex: count }} />
-                  })}
-                </div>
-              )}
+              {data && (() => {
+                const sc = data.columns.find(c => c.type === 'status')
+                const opts = sc?.options as { colors?: Record<string, string> }
+                const counts = data.items.reduce((acc, it) => {
+                  const val = sc ? String(it.data[sc.id] ?? '') : ''
+                  if (val) acc[val] = (acc[val] ?? 0) + 1
+                  return acc
+                }, {} as Record<string, number>)
+                const SEMANTIC: Record<string, string> = { 'on track': '#16a34a', 'at risk': '#ca8a04', 'stuck': '#dc2626', 'done': '#94a3b8' }
+                const entries = Object.entries(counts)
+                return (
+                  <>
+                    <div className="flex gap-0.5 h-1.5 rounded-full overflow-hidden" style={{ background: '#E8E8E4', marginTop: 8 }}>
+                      {entries.map(([v, count]) => <div key={v} className="h-full" style={{ backgroundColor: opts?.colors?.[v] ?? '#333', flex: count }} />)}
+                    </div>
+                    {entries.length > 0 && (
+                      <div style={{ display: 'flex', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
+                        {entries.map(([v, count]) => {
+                          const color = SEMANTIC[v.toLowerCase()] ?? opts?.colors?.[v] ?? '#94a3b8'
+                          return (
+                            <span key={v} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, color: '#6B7280' }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }} />
+                              {v} ({count})
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
               <div style={{ fontSize: 10, color: '#9A9A92', marginTop: 6, textAlign: 'right' }}>Open →</div>
             </button>
           )
@@ -132,8 +150,10 @@ function MyWorkView({ allBoardData, myMemberId }: { allBoardData: Record<string,
       </div>
 
       {myItems.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: '#9A9A92' }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>◈</div>
+        <div style={{ padding: '48px 0', color: '#9A9A92' }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{ marginBottom: 12 }}>
+            <rect x="3" y="5" width="18" height="14" rx="2" /><path d="M9 9l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           <p style={{ margin: '0 0 6px', fontWeight: 500, color: '#1A1A18', fontSize: 14 }}>No items assigned to you yet</p>
           <p style={{ margin: 0, fontSize: 12, color: '#9A9A92', maxWidth: 320, lineHeight: 1.5 }}>Open any board, click the PM column on a row, and select your name to assign items to yourself.</p>
         </div>
@@ -223,7 +243,9 @@ function InboxView({ userId }: { userId: string }) {
         <div style={{ color: '#9A9A92', fontSize: 13 }}>Loading…</div>
       ) : items.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 0', color: '#9A9A92' }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>◈</div>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{ marginBottom: 12 }}>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" />
+          </svg>
           <p style={{ margin: '0 0 6px', fontWeight: 500, color: '#1A1A18', fontSize: 14 }}>You&apos;re all caught up</p>
           <p style={{ margin: 0, fontSize: 12, color: '#9A9A92', maxWidth: 280, lineHeight: 1.5 }}>Notifications will appear here when project statuses change or items are assigned.</p>
         </div>
@@ -519,7 +541,7 @@ export default function PMSystemPage() {
       )}
       <MondayTopBar />
       {savedToast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100, background: '#1A1A18', color: '#FFFFFF', fontSize: 12, fontWeight: 500, padding: '8px 16px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '0.04em' }}>
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100, background: '#1A1A18', color: '#FFFFFF', fontSize: 12, fontWeight: 500, padding: '8px 16px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}>
           <span style={{ color: '#4ADE80' }}>✓</span> Saved
         </div>
       )}
