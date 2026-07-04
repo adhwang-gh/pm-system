@@ -46,6 +46,15 @@ function getStatusColor(col: MColumn, value: string): string {
   return opts?.colors?.[value] ?? '#333'
 }
 
+const STATUS_SEMANTIC: Record<string, { bg: string; text: string; border?: string }> = {
+  'on track':            { bg: '#dcfce7', text: '#16a34a' },
+  'at risk':             { bg: '#fef9c3', text: '#ca8a04' },
+  'stuck':               { bg: '#fee2e2', text: '#dc2626' },
+  'done':                { bg: '#f1f5f9', text: '#64748b' },
+  "haven't started yet": { bg: '#ffffff', text: '#94a3b8', border: '1px solid #e2e8f0' },
+  "haven't started":     { bg: '#ffffff', text: '#94a3b8', border: '1px solid #e2e8f0' },
+}
+
 function getStatusValues(col: MColumn): string[] {
   const opts = col.options as { values?: string[] }
   return opts?.values ?? []
@@ -78,12 +87,21 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
 
   /* ── Status ── */
   if (col.type === 'status') {
-    const color = str ? getStatusColor(col, str) : '#F5F5F2'
+    const isPlain = col.title.toLowerCase().includes('priority') || col.title.toLowerCase().includes('phase')
+    const semantic = !isPlain ? STATUS_SEMANTIC[str.toLowerCase()] : null
+    let bg = '#F5F5F2', badgeText = MUTED, badgeBorder = 'none'
+    if (isPlain) {
+      bg = 'transparent'; badgeText = '#94a3b8'; badgeBorder = 'none'
+    } else if (semantic) {
+      bg = semantic.bg; badgeText = semantic.text; badgeBorder = semantic.border ?? 'none'
+    } else if (str) {
+      const raw = getStatusColor(col, str); bg = raw; badgeText = isLightColor(raw) ? '#374151' : '#fff'
+    }
     const values = getStatusValues(col)
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <button onClick={() => setShowPicker(v => !v)}
-          style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', background: color, color: str ? (isLightColor(color) ? '#374151' : '#fff') : MUTED, letterSpacing: '0.06em', transition: 'opacity 0.1s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingLeft: 6, paddingRight: 6 }}>
+          style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: isPlain ? 500 : 600, border: badgeBorder, cursor: 'pointer', background: bg, color: str ? badgeText : MUTED, letterSpacing: '0.06em', transition: 'opacity 0.1s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingLeft: 6, paddingRight: 6 }}>
           {str || '—'}
         </button>
         {showPicker && (
@@ -217,15 +235,15 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
   /* ── Timeline ── */
   if (col.type === 'timeline') {
     const [start, end] = str.split('|')
-    const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) } catch { return d } }
+    const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) } catch { return d } }
     const label = str ? `${fmtDate(start)} → ${fmtDate(end)}` : ''
     const today = Date.now()
     const startMs = start ? new Date(start).getTime() : 0
     const endMs = end ? new Date(end).getTime() : 0
     const pct = (startMs && endMs && endMs > startMs) ? Math.min(100, Math.max(0, Math.round((today - startMs) / (endMs - startMs) * 100))) : 0
-    const isPast = endMs && today > endMs
-    const isFuture = startMs && today < startMs
-    const barColor = isPast ? '#22C55E' : isFuture ? '#CBD5E1' : '#3D5A80'
+    const isPast = !!(endMs && today > endMs)
+    const isFuture = !!(startMs && today < startMs)
+    const isOngoing = !isPast && !isFuture && !!(startMs && endMs)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 6px', overflow: 'hidden' }}>
         {str ? (
@@ -234,9 +252,11 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
               style={{ fontSize: 10, fontWeight: 500, color: TEXT, background: '#F3F3F0', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '2px 8px', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
               {label}
             </button>
-            <div style={{ width: '100%', height: 3, background: '#E8E8E4', borderRadius: 99, marginTop: 3, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${pct}%`, background: barColor, borderRadius: 99, transition: 'width 0.3s' }} />
-            </div>
+            {isOngoing && (
+              <div style={{ width: '100%', height: 3, background: '#E8E8E4', borderRadius: 99, marginTop: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: '#22C55E', borderRadius: 99, transition: 'width 0.3s' }} />
+              </div>
+            )}
           </>
         ) : (
           <button onClick={() => setEditing(true)} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Set dates</button>

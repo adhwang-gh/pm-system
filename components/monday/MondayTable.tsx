@@ -10,6 +10,8 @@ const SURFACE = '#FFFFFF'
 const BORDER = '#E8E8E4'
 const TEXT = '#1A1A18'
 const MUTED = '#9A9A92'
+const GROUP_ACCENT = '#6366f1'
+const SANS = "system-ui, -apple-system, 'Inter', sans-serif"
 
 interface Props {
   boardId: string
@@ -41,9 +43,9 @@ function DynGroupSection({ label, color, items, columns, hiddenCols, selectedIds
     <tbody>
       <tr>
         <td colSpan={visibleCols.length + 3} style={{ paddingTop: 16, paddingBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${color}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${GROUP_ACCENT}` }}>
             <button onClick={() => setCollapsed(v => !v)} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, width: 14 }}>{collapsed ? '▸' : '▾'}</button>
-            <span style={{ fontWeight: 700, fontSize: 12, color: color, letterSpacing: '0.02em' }}>{label || '(none)'}</span>
+            <span style={{ fontWeight: 500, fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label || '(none)'}</span>
             <span style={{ fontSize: 10, color: MUTED, background: '#F3F3F0', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
           </div>
         </td>
@@ -51,15 +53,15 @@ function DynGroupSection({ label, color, items, columns, hiddenCols, selectedIds
 
       {!collapsed && (
         <tr style={{ background: '#FFFFFF' }}>
-          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${color}` }}>
+          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${GROUP_ACCENT}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
               <input type="checkbox" checked={allSelected} onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }} />
             </div>
           </td>
-          <th style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '8px 12px', minWidth: 280, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'IBM Plex Mono', monospace" }}>Project</th>
+          <th style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '12px 12px', minWidth: 280, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: SANS }}>Project</th>
           {visibleCols.map(col => (
-            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#FFFFFF', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: "'IBM Plex Mono', monospace" }}>
-              <div style={{ padding: '8px 8px' }}>{col.title}</div>
+            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#FFFFFF', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: SANS }}>
+              <div style={{ padding: '12px 8px' }}>{col.title}</div>
             </th>
           ))}
           <th style={{ borderBottom: `1px solid ${BORDER}`, width: 32, background: '#FFFFFF' }} />
@@ -67,12 +69,12 @@ function DynGroupSection({ label, color, items, columns, hiddenCols, selectedIds
       )}
 
       {!collapsed && items.map(item => (
-        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={color}
+        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={GROUP_ACCENT}
           selected={selectedIds.has(item.id)} onToggleSelect={() => onToggleSelect(item.id)}
           onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
       ))}
 
-      <tr><td colSpan={visibleCols.length + 3} style={{ height: 8 }} /></tr>
+      <tr><td colSpan={visibleCols.length + 3} style={{ height: 12 }} /></tr>
     </tbody>
   )
 }
@@ -100,9 +102,9 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
     <tbody>
       <tr>
         <td colSpan={visibleCols.length + 3} style={{ paddingTop: 16, paddingBottom: 0 }}>
-          <div onMouseEnter={() => setHeaderHovered(true)} onMouseLeave={() => setHeaderHovered(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${group.color}` }}>
+          <div onMouseEnter={() => setHeaderHovered(true)} onMouseLeave={() => setHeaderHovered(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderLeft: `3px solid ${GROUP_ACCENT}` }}>
             <button onClick={toggle} style={{ color: MUTED, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, width: 14 }}>{collapsed ? '▸' : '▾'}</button>
-            <span style={{ fontWeight: 700, fontSize: 12, color: group.color, letterSpacing: '0.02em' }}>{group.title}</span>
+            <span style={{ fontWeight: 500, fontSize: 11, color: '#94a3b8', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{group.title}</span>
             <span style={{ fontSize: 10, color: MUTED, background: '#F3F3F0', borderRadius: 99, padding: '1px 8px' }}>{items.length}</span>
             {headerHovered && onDeleteGroup && (
               <button onClick={() => { if (confirm(`Delete group "${group.title}" and all its items?`)) onDeleteGroup() }}
@@ -114,15 +116,15 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
 
       {!collapsed && (
         <tr style={{ background: '#FFFFFF' }}>
-          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${group.color}` }}>
+          <td style={{ width: 32, borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${GROUP_ACCENT}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
               <input type="checkbox" checked={allSelected} onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer' }} />
             </div>
           </td>
-          <th style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '8px 12px', minWidth: 280, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'IBM Plex Mono', monospace" }}>Project</th>
+          <th style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '12px 12px', minWidth: 280, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: SANS }}>Project</th>
           {visibleCols.map(col => (
-            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#FFFFFF', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: "'IBM Plex Mono', monospace" }}>
-              <div style={{ padding: '8px 8px' }}>{col.title}</div>
+            <th key={col.id} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, background: '#FFFFFF', fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', width: col.width, minWidth: col.width, fontFamily: SANS }}>
+              <div style={{ padding: '12px 8px' }}>{col.title}</div>
             </th>
           ))}
           <th style={{ borderBottom: `1px solid ${BORDER}`, width: 32, background: '#FFFFFF' }} />
@@ -130,14 +132,14 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
       )}
 
       {!collapsed && items.map(item => (
-        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={group.color}
+        <ItemRow key={item.id} item={item} columns={visibleCols} groupColor={GROUP_ACCENT}
           selected={selectedIds.has(item.id)} onToggleSelect={() => onToggleSelect(item.id)}
           onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
       ))}
 
       {!collapsed && (
         <tr>
-          <td style={{ borderLeft: `3px solid ${group.color}`, borderBottom: `1px solid ${BORDER}` }} />
+          <td style={{ borderLeft: `3px solid ${GROUP_ACCENT}`, borderBottom: `1px solid ${BORDER}` }} />
           <td style={{ borderBottom: `1px solid ${BORDER}` }} colSpan={visibleCols.length + 2}>
             {addingItem ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px' }}>
@@ -149,7 +151,7 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
                 <button onClick={() => setAddingItem(false)} style={{ fontSize: 11, color: MUTED, background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
               </div>
             ) : (
-              <button onClick={() => setAddingItem(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', fontSize: 12, color: MUTED, background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+              <button onClick={() => setAddingItem(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px 6px 44px', fontSize: 12, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
                 + Add project
               </button>
             )}
@@ -157,7 +159,7 @@ function GroupSection({ group, columns, items, onUpdateItem, onDeleteItem, onAdd
         </tr>
       )}
 
-      <tr><td colSpan={visibleCols.length + 3} style={{ height: 8 }} /></tr>
+      <tr><td colSpan={visibleCols.length + 3} style={{ height: 12 }} /></tr>
     </tbody>
   )
 }
@@ -173,7 +175,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
   const [hovered, setHovered] = useState(false)
   return (
     <tr onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ borderBottom: `1px solid ${BORDER}`, background: selected ? `${GOLD}0D` : hovered ? '#FFFFFF' : 'transparent', transition: 'background 0.1s' }}>
+      style={{ borderBottom: `1px solid ${BORDER}`, background: selected ? `${GOLD}0D` : hovered ? '#f8fafc' : 'transparent', transition: 'background 0.1s' }}>
       <td style={{ width: 32, borderRight: `1px solid ${BORDER}`, borderLeft: `3px solid ${groupColor}` }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 0' }}>
           <input type="checkbox" checked={selected} onChange={onToggleSelect} style={{ accentColor: GOLD, width: 13, height: 13, cursor: 'pointer', opacity: selected || hovered ? 1 : 0, transition: 'opacity 0.15s' }} />
@@ -187,7 +189,7 @@ function ItemRow({ item, columns, groupColor, selected, onToggleSelect, onUpdate
             style={{ width: '100%', padding: '8px 12px', fontSize: 13, outline: 'none', border: `1px solid ${GOLD}`, borderRadius: 10, background: '#F3F3F0', color: TEXT }} />
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', cursor: 'pointer' }} onDoubleClick={() => setEditingTitle(true)}>
-            <span style={{ fontSize: 13, color: TEXT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title || 'Untitled'}</span>
+            <span style={{ fontSize: 13, color: TEXT, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: SANS }}>{item.title || 'Untitled'}</span>
             {hovered && <button onClick={e => { e.stopPropagation(); setEditingTitle(true) }} title="Edit title" style={{ color: '#9A9A92', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, flexShrink: 0, lineHeight: 1 }}>✎</button>}
             {hovered && <button onClick={e => { e.stopPropagation(); onDelete() }} title="Delete" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>}
           </div>
@@ -506,13 +508,13 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
                       onChange={() => { const allSel = filtered.every(it => selectedIds.has(it.id)); handleSelectAll(allSel ? [] : filtered.map(i => i.id)) }} />
                   </div>
                 </td>
-                <th onClick={() => handleHeaderSort('title')} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '8px 12px', minWidth: 280, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', userSelect: 'none', fontFamily: "'IBM Plex Mono', monospace" }}>
+                <th onClick={() => handleHeaderSort('title')} style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'left', padding: '12px 12px', minWidth: 280, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', userSelect: 'none', fontFamily: SANS }}>
                   Project {sortColId === 'title' && (sortDir === 'asc' ? '↑' : '↓')}
                 </th>
                 {visibleCols.map(col => (
                   <th key={col.id} onClick={() => handleHeaderSort(col.id)}
-                    style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', cursor: 'pointer', userSelect: 'none', width: col.width, minWidth: col.width, fontFamily: "'IBM Plex Mono', monospace" }}>
-                    <div style={{ padding: '8px 8px' }}>{col.title} {sortColId === col.id && (sortDir === 'asc' ? '↑' : '↓')}</div>
+                    style={{ borderBottom: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.06em', cursor: 'pointer', userSelect: 'none', width: col.width, minWidth: col.width, fontFamily: SANS }}>
+                    <div style={{ padding: '12px 8px' }}>{col.title} {sortColId === col.id && (sortDir === 'asc' ? '↑' : '↓')}</div>
                   </th>
                 ))}
                 <th style={{ borderBottom: `1px solid ${BORDER}`, width: 32 }} />
@@ -521,7 +523,7 @@ export default function MondayTable({ groups, columns, items, onUpdateItem, onDe
             <tbody>
               {filtered.map(item => (
                 <ItemRow key={item.id} item={item} columns={visibleCols}
-                  groupColor={groups.find(g => g.id === item.group_id)?.color ?? '#444'}
+                  groupColor={groups.find(g => g.id === item.group_id)?.color ?? GROUP_ACCENT}
                   selected={selectedIds.has(item.id)} onToggleSelect={() => toggleSelect(item.id)}
                   onUpdateItem={onUpdateItem} onDelete={() => onDeleteItem(item.id)} userId={userId} />
               ))}
