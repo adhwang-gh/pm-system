@@ -93,21 +93,45 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       if (changedKeys.length > 0) await fireWebhooks(turso, boardId, 'item_updated', { item_id: itemId, changed_fields: changedKeys })
 
       // Write notifications for status/person changes
-      const userId = req.headers.get('X-Pm-User-Id')
-      if (userId && changedKeys.length > 0) {
+      const changerId = req.headers.get('X-Pm-User-Id')
+      if (changerId && changedKeys.length > 0) {
         const boardRes = await turso.execute({ sql: 'SELECT title FROM monday_boards WHERE id = ?', args: [boardId] })
         const boardTitle = String(boardRes.rows[0]?.title ?? '')
         const itemTitle = String(existing.title ?? '')
         const colsRes = await turso.execute({ sql: 'SELECT * FROM monday_columns WHERE board_id = ?', args: [boardId] })
+
+        // Find all person columns to know who is assigned to this item
+        const personCols = colsRes.rows.filter(c => c.type === 'person')
+        const assignedIds = new Set<string>()
+        for (const pc of personCols) {
+          const val = String(afterAuto[pc.id as string] ?? oldData[pc.id as string] ?? '')
+          val.split(',').filter(Boolean).forEach(id => assignedIds.add(id))
+        }
+        // Always include changer so solo users get their own activity log
+        assignedIds.add(changerId)
+
         for (const key of changedKeys) {
           const col = colsRes.rows.find(c => c.id === key)
           if (!col) continue
           if (col.type === 'status') {
             const newVal = String(afterAuto[key] ?? '')
-            if (newVal) await writeNotification(turso, userId, 'status', `"${itemTitle}" status changed to ${newVal}`, boardTitle, itemTitle)
+            if (newVal) {
+              for (const uid of assignedIds) {
+                await writeNotification(turso, uid, 'status', `"${itemTitle}" status changed to ${newVal} on ${boardTitle}`, boardTitle, itemTitle)
+              }
+            }
           } else if (col.type === 'person') {
-            const newVal = String(afterAuto[key] ?? '')
-            if (newVal) await writeNotification(turso, userId, 'person', `You were assigned to "${itemTitle}"`, boardTitle, itemTitle)
+            // Notify each newly added assignee
+            const oldIds = new Set(String(oldData[key] ?? '').split(',').filter(Boolean))
+            const newIds = String(afterAuto[key] ?? '').split(',').filter(Boolean)
+            for (const uid of newIds) {
+              if (!oldIds.has(uid)) {
+                const msg = uid === changerId
+                  ? `You assigned yourself to "${itemTitle}" on ${boardTitle}`
+                  : `You were assigned to "${itemTitle}" on ${boardTitle}`
+                await writeNotification(turso, uid, 'person', msg, boardTitle, itemTitle)
+              }
+            }
           }
         }
       }

@@ -213,6 +213,10 @@ function InboxView({ userId }: { userId: string }) {
     setItems(prev => prev.map(i => ({ ...i, read: 1 })))
     await fetch('/monday/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Pm-User-Id': userId }, body: JSON.stringify({ action: 'mark_read', all: true }) })
   }
+  const clearAll = async () => {
+    setItems([])
+    await fetch('/monday/api/notifications', { method: 'DELETE', headers: { 'X-Pm-User-Id': userId } })
+  }
 
   const tagLabel = (type: string) => ({ status: 'STATUS', person: 'ASSIGN' }[type] ?? type.toUpperCase().slice(0, 7))
   const timeAgo = (iso: string) => {
@@ -233,11 +237,18 @@ function InboxView({ userId }: { userId: string }) {
           <div style={{ fontSize: 22, fontWeight: 600, color: '#1A1A18', marginBottom: 4 }}>Inbox</div>
           <div style={{ fontSize: 11, color: MUTED }}>{unread} unread notification{unread !== 1 ? 's' : ''}</div>
         </div>
-        {unread > 0 && (
-          <button onClick={e => { e.stopPropagation(); markAllRead() }} style={{ fontSize: 11, color: GOLD, background: 'none', border: `1px solid ${GOLD}44`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer', letterSpacing: '0.06em' }}>
-            Mark all read
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {unread > 0 && (
+            <button onClick={e => { e.stopPropagation(); markAllRead() }} style={{ fontSize: 11, color: GOLD, background: 'none', border: `1px solid ${GOLD}44`, borderRadius: 10, padding: '5px 12px', cursor: 'pointer' }}>
+              Mark all read
+            </button>
+          )}
+          {items.length > 0 && (
+            <button onClick={e => { e.stopPropagation(); clearAll() }} style={{ fontSize: 11, color: '#9A9A92', background: 'none', border: '1px solid #E8E8E4', borderRadius: 10, padding: '5px 12px', cursor: 'pointer' }}>
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
       {loadingNotifs ? (
         <div style={{ color: '#9A9A92', fontSize: 13 }}>Loading…</div>
@@ -476,7 +487,7 @@ export default function PMSystemPage() {
   const updateItem = async (itemId: string, title?: string, data?: Record<string, string | number>) => {
     if (!selectedBoardId) return
     const res = await fetch(`/monday/api/boards/${selectedBoardId}/items`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...pmHeaders },
       body: JSON.stringify({ itemId, title, data }),
     })
     const updated = await res.json()

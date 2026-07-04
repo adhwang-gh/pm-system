@@ -25,3 +25,12 @@ export async function POST(req: Request) {
   }
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(req: Request) {
+  await ensureNotificationsTable()
+  const userId = getUserId(req)
+  if (!userId) return NextResponse.json({ ok: false })
+  const turso = getTurso()
+  await turso.execute({ sql: 'DELETE FROM pm_notifications WHERE user_id = ?', args: [userId] })
+  return NextResponse.json({ ok: true })
+}
