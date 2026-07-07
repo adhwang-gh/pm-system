@@ -60,6 +60,18 @@ function getStatusValues(col: MColumn): string[] {
   return opts?.values ?? []
 }
 
+function colPlaceholder(col: MColumn): string {
+  const t = col.title.toLowerCase()
+  if (col.type === 'person') return 'Unassigned'
+  if (col.type === 'timeline') return 'Set dates'
+  if (t.includes('status')) return 'Set status'
+  if (t.includes('priority')) return 'Set priority'
+  if (t.includes('phase')) return 'Set phase'
+  if (t.includes('overview') || t.includes('description') || t.includes('summary')) return 'Add a brief overview'
+  if (col.type === 'status') return 'Choose option'
+  return 'Click to edit'
+}
+
 export default function MondayCell({ col, value, onChange, userId }: Props) {
   const [editing, setEditing] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
@@ -102,7 +114,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <button onClick={() => setShowPicker(v => !v)}
           style={{ width: '100%', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: isPlain ? 500 : 600, border: badgeBorder, cursor: 'pointer', background: bg, color: str ? badgeText : MUTED, letterSpacing: '0.06em', transition: 'opacity 0.1s', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingLeft: 6, paddingRight: 6 }}>
-          {str || '—'}
+          {str || colPlaceholder(col)}
         </button>
         {showPicker && (
           <>
@@ -306,7 +318,7 @@ export default function MondayCell({ col, value, onChange, userId }: Props) {
   return (
     <div onClick={() => setEditing(true)} title={str || undefined}
       style={{ height: 36, padding: '0 8px', display: 'flex', alignItems: 'center', fontSize: 12, color: str ? TEXT : '#B0B0AA', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-      {str || '—'}
+      {str || colPlaceholder(col)}
     </div>
   )
 }
